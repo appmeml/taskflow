@@ -10,18 +10,14 @@
       padding: 0;
       box-sizing: border-box;
     }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: #f5f5f5;
       color: #333;
     }
-
     .hidden {
       display: none !important;
     }
-
-    /* AUTH */
     #auth-container {
       display: flex;
       align-items: center;
@@ -29,7 +25,6 @@
       min-height: 100vh;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
-
     .auth-box {
       background: white;
       border-radius: 12px;
@@ -38,28 +33,23 @@
       width: 90%;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     }
-
     .auth-heading h1 {
       font-size: 28px;
       margin-bottom: 8px;
       color: #333;
     }
-
     .auth-heading p {
       color: #666;
       font-size: 14px;
       margin-bottom: 24px;
     }
-
     .form-group {
       margin-bottom: 16px;
       display: none;
     }
-
     .form-group.active {
       display: block;
     }
-
     .form-group label {
       display: block;
       font-size: 14px;
@@ -67,21 +57,17 @@
       margin-bottom: 6px;
       color: #333;
     }
-
     .form-group input {
       width: 100%;
       padding: 12px;
       border: 1px solid #ddd;
       border-radius: 6px;
       font-size: 14px;
-      transition: border-color 0.2s;
     }
-
     .form-group input:focus {
       outline: none;
       border-color: #667eea;
     }
-
     #auth-form button {
       width: 100%;
       padding: 12px;
@@ -92,32 +78,25 @@
       font-weight: 600;
       cursor: pointer;
       margin-top: 12px;
-      transition: background 0.2s;
     }
-
     #auth-form button:hover {
       background: #5568d3;
     }
-
     .auth-toggle {
       text-align: center;
       margin-top: 20px;
       font-size: 14px;
       color: #666;
     }
-
     .auth-toggle a {
       color: #667eea;
       cursor: pointer;
       text-decoration: none;
       font-weight: 600;
     }
-
-    /* APP */
     #app-container {
       display: none;
     }
-
     .navbar {
       background: white;
       padding: 16px 24px;
@@ -127,19 +106,16 @@
       border-bottom: 1px solid #eee;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
-
     .navbar-brand {
       font-size: 20px;
       font-weight: 700;
       color: #667eea;
     }
-
     .navbar-right {
       display: flex;
       align-items: center;
       gap: 16px;
     }
-
     .logout-btn {
       padding: 8px 16px;
       background: #ff6b6b;
@@ -150,57 +126,42 @@
       font-size: 14px;
       font-weight: 600;
     }
-
-    .logout-btn:hover {
-      background: #ee5a52;
-    }
-
     .main-content {
       padding: 32px;
       max-width: 1200px;
       margin: 0 auto;
     }
-
     .boards-header h2 {
       font-size: 24px;
       margin-bottom: 8px;
     }
-
     .boards-header p {
       color: #666;
       margin-bottom: 24px;
     }
-
     #boards-container {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
       gap: 16px;
     }
-
     .board-card {
       padding: 20px;
       border-radius: 8px;
       color: white;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: transform 0.2s;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
-
     .board-card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
     }
-
     .board-card h3 {
       font-size: 18px;
       margin-bottom: 16px;
     }
-
     .board-actions {
       display: flex;
       gap: 8px;
     }
-
     .btn-sm {
       padding: 8px 12px;
       background: rgba(255, 255, 255, 0.3);
@@ -210,25 +171,17 @@
       cursor: pointer;
       font-size: 12px;
       font-weight: 600;
-      transition: background 0.2s;
     }
-
-    .btn-sm:hover {
-      background: rgba(255, 255, 255, 0.5);
-    }
-
     .board-create {
       padding: 24px;
       border: 2px dashed #ddd;
       border-radius: 8px;
       text-align: center;
     }
-
     .board-create h3 {
       margin-bottom: 16px;
       color: #333;
     }
-
     .board-create input {
       padding: 10px;
       margin: 8px;
@@ -236,7 +189,6 @@
       border-radius: 4px;
       font-size: 14px;
     }
-
     .board-create button {
       padding: 10px 20px;
       background: #667eea;
@@ -246,11 +198,6 @@
       cursor: pointer;
       font-weight: 600;
     }
-
-    .board-create button:hover {
-      background: #5568d3;
-    }
-
     .toast {
       position: fixed;
       bottom: 20px;
@@ -263,15 +210,12 @@
       z-index: 9999;
       animation: slideIn 0.3s ease-out;
     }
-
     .toast-success {
       background: #4caf50;
     }
-
     .toast-error {
       background: #f44336;
     }
-
     @keyframes slideIn {
       from {
         transform: translateX(400px);
@@ -282,7 +226,6 @@
         opacity: 1;
       }
     }
-
     .empty-state {
       text-align: center;
       padding: 40px;
@@ -292,7 +235,6 @@
   </style>
 </head>
 <body>
-  <!-- AUTH SCREEN -->
   <div id="auth-container">
     <div class="auth-box">
       <div class="auth-heading">
@@ -320,7 +262,6 @@
     </div>
   </div>
 
-  <!-- APP SCREEN -->
   <div id="app-container" class="hidden">
     <div class="navbar">
       <span class="navbar-brand">TaskFlow</span>
@@ -338,14 +279,11 @@
     </div>
   </div>
 
-  <!-- FIREBASE SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"></script>
 
-  <!-- APP SCRIPT -->
   <script>
-    // FIREBASE CONFIG
     const firebaseConfig = {
       apiKey: "AIzaSyBjRj5Ba8HQiqb6W4UBAVDGMgVLhidvGsk",
       authDomain: "taskflow-ec.firebaseapp.com",
@@ -355,152 +293,106 @@
       appId: "1:175224756577:web:3fef747dcae223c934cd20"
     };
 
-    // Inicializar Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
-    console.log('✅ Firebase initialized');
 
     let currentUser = null;
     let isRegisterMode = false;
 
-    function showToast(message, type = 'success') {
-      const toast = document.createElement('div');
-      toast.className = `toast toast-${type}`;
-      toast.textContent = message;
-      document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 3000);
+    function showToast(msg, type = 'success') {
+      const t = document.createElement('div');
+      t.className = `toast toast-${type}`;
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3000);
     }
 
-    // DOM Elements
     const authForm = document.getElementById('auth-form');
-    const toggleModeBtn = document.getElementById('toggle-mode');
+    const toggleBtn = document.getElementById('toggle-mode');
     const authTitle = document.getElementById('auth-title');
     const authBtn = document.getElementById('auth-btn');
     const nameGroup = document.getElementById('name-group');
     const logoutBtn = document.getElementById('logout-btn');
-    const userEmailSpan = document.getElementById('user-email');
+    const userEmail = document.getElementById('user-email');
     const authContainer = document.getElementById('auth-container');
     const appContainer = document.getElementById('app-container');
     const boardsContainer = document.getElementById('boards-container');
 
-    // Toggle Register/Login Mode
-    toggleModeBtn.addEventListener('click', (e) => {
+    toggleBtn.addEventListener('click', (e) => {
       e.preventDefault();
       isRegisterMode = !isRegisterMode;
-      
       if (isRegisterMode) {
         authTitle.textContent = 'Crear cuenta';
         authBtn.textContent = 'Crear cuenta';
         nameGroup.classList.add('active');
-        toggleModeBtn.innerHTML = '¿Ya tienes cuenta? <a href="#">Inicia sesión aquí</a>';
+        toggleBtn.innerHTML = '¿Ya tienes cuenta? <a href="#">Inicia sesión aquí</a>';
       } else {
         authTitle.textContent = 'Iniciar sesión';
         authBtn.textContent = 'Iniciar sesión';
         nameGroup.classList.remove('active');
-        toggleModeBtn.innerHTML = '¿No tienes cuenta? <a href="#">Regístrate aquí</a>';
+        toggleBtn.innerHTML = '¿No tienes cuenta? <a href="#">Regístrate aquí</a>';
       }
     });
 
-    // Handle Auth Form Submit
     authForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value.trim();
       const name = document.getElementById('name').value.trim();
 
       if (!email || !password) {
-        showToast('Por favor llena todos los campos', 'error');
+        showToast('Llena todos los campos', 'error');
         return;
       }
 
       try {
         if (isRegisterMode) {
-          // REGISTER MODE
           if (!name) {
-            showToast('Por favor ingresa tu nombre', 'error');
+            showToast('Ingresa tu nombre', 'error');
             return;
           }
-
-          console.log('📝 Creando usuario:', email);
-          const result = await auth.createUserWithEmailAndPassword(email, password);
-          const user = result.user;
-          console.log('✅ Usuario creado:', user.uid);
-
-          await db.collection('users').doc(user.uid).set({
+          await auth.createUserWithEmailAndPassword(email, password);
+          await db.collection('users').doc(auth.currentUser.uid).set({
             email: email,
             name: name,
             createdAt: new Date()
           });
-          console.log('✅ Usuario guardado en Firestore');
-
-          showToast('✅ Cuenta creada exitosamente');
+          showToast('✅ Cuenta creada');
           authForm.reset();
-          
-          // Reset form to login mode
           isRegisterMode = false;
           authTitle.textContent = 'Iniciar sesión';
           authBtn.textContent = 'Iniciar sesión';
           nameGroup.classList.remove('active');
-          toggleModeBtn.innerHTML = '¿No tienes cuenta? <a href="#">Regístrate aquí</a>';
-
+          toggleBtn.innerHTML = '¿No tienes cuenta? <a href="#">Regístrate aquí</a>';
         } else {
-          // LOGIN MODE
-          console.log('🔐 Iniciando sesión:', email);
           await auth.signInWithEmailAndPassword(email, password);
-          console.log('✅ Sesión iniciada');
           showToast('✅ Sesión iniciada');
           authForm.reset();
         }
-      } catch (error) {
-        console.error('❌ Auth error:', error.code, error.message);
-        
-        // Mensajes de error en español
-        let mensajeError = error.message;
-        if (error.code === 'auth/email-already-in-use') {
-          mensajeError = 'Este email ya está registrado';
-        } else if (error.code === 'auth/weak-password') {
-          mensajeError = 'La contraseña debe tener al menos 6 caracteres';
-        } else if (error.code === 'auth/user-not-found') {
-          mensajeError = 'Usuario no encontrado';
-        } else if (error.code === 'auth/wrong-password') {
-          mensajeError = 'Contraseña incorrecta';
-        } else if (error.code === 'auth/invalid-email') {
-          mensajeError = 'Email inválido';
-        }
-        
-        showToast(mensajeError, 'error');
+      } catch (err) {
+        showToast(err.message, 'error');
       }
     });
 
-    // Handle Logout
     logoutBtn.addEventListener('click', async () => {
       try {
         await auth.signOut();
         showToast('Sesión cerrada');
-      } catch (error) {
-        showToast(error.message, 'error');
+      } catch (err) {
+        showToast(err.message, 'error');
       }
     });
 
-    // Load Boards
     async function loadBoards() {
       if (!currentUser) return;
-
       try {
         boardsContainer.innerHTML = '';
-
-        const snapshot = await db
-          .collection('users')
-          .doc(currentUser.uid)
-          .collection('boards')
-          .get();
-
-        if (snapshot.empty) {
-          boardsContainer.innerHTML = '<p class="empty-state">No hay tableros. Crea uno para empezar.</p>';
+        const snap = await db.collection('users').doc(currentUser.uid).collection('boards').get();
+        if (snap.empty) {
+          boardsContainer.innerHTML = '<p class="empty-state">No hay tableros</p>';
         } else {
-          snapshot.forEach(doc => {
+          snap.forEach(doc => {
             const board = doc.data();
             const card = document.createElement('div');
             card.className = 'board-card';
@@ -509,95 +401,71 @@
               <h3>${board.title}</h3>
               <div class="board-actions">
                 <button class="btn-sm" onclick="openBoard('${doc.id}')">Abrir</button>
-                <button class="btn-sm" onclick="deleteBoard('${doc.id}')" style="background: rgba(255,0,0,0.3)">Eliminar</button>
+                <button class="btn-sm" onclick="deleteBoard('${doc.id}')">Eliminar</button>
               </div>
             `;
             boardsContainer.appendChild(card);
           });
         }
-
         const form = document.createElement('div');
         form.className = 'board-create';
         form.innerHTML = `
           <h3>+ Crear nuevo tablero</h3>
-          <input type="text" id="new-board-name" placeholder="Nombre del tablero" />
+          <input type="text" id="new-board-name" placeholder="Nombre" />
           <input type="color" id="new-board-color" value="#0079bf" />
           <button onclick="createBoard()">Crear</button>
         `;
         boardsContainer.appendChild(form);
-
-      } catch (error) {
-        console.error('Error loading boards:', error);
+      } catch (err) {
         showToast('Error cargando tableros', 'error');
       }
     }
 
-    // Create Board
-    window.createBoard = async function() {
+    window.createBoard = async () => {
       const name = document.getElementById('new-board-name').value.trim();
       const color = document.getElementById('new-board-color').value;
-
       if (!name) {
-        showToast('Ingresa un nombre para el tablero', 'error');
+        showToast('Ingresa un nombre', 'error');
         return;
       }
-
       try {
-        await db
-          .collection('users')
-          .doc(currentUser.uid)
-          .collection('boards')
-          .add({
-            title: name,
-            background: color,
-            createdAt: new Date()
-          });
-
+        await db.collection('users').doc(currentUser.uid).collection('boards').add({
+          title: name,
+          background: color,
+          createdAt: new Date()
+        });
         showToast('✅ Tablero creado');
         loadBoards();
-      } catch (error) {
-        showToast(error.message, 'error');
+      } catch (err) {
+        showToast(err.message, 'error');
       }
     };
 
-    // Open Board
-    window.openBoard = function(boardId) {
-      localStorage.setItem('selectedBoardId', boardId);
+    window.openBoard = (id) => {
+      localStorage.setItem('selectedBoardId', id);
       localStorage.setItem('selectedUserId', currentUser.uid);
       window.location.href = 'board.html';
     };
 
-    // Delete Board
-    window.deleteBoard = async function(boardId) {
-      if (!confirm('¿Eliminar este tablero?')) return;
-
+    window.deleteBoard = async (id) => {
+      if (!confirm('¿Eliminar?')) return;
       try {
-        await db
-          .collection('users')
-          .doc(currentUser.uid)
-          .collection('boards')
-          .doc(boardId)
-          .delete();
-
-        showToast('✅ Tablero eliminado');
+        await db.collection('users').doc(currentUser.uid).collection('boards').doc(id).delete();
+        showToast('✅ Eliminado');
         loadBoards();
-      } catch (error) {
-        showToast(error.message, 'error');
+      } catch (err) {
+        showToast(err.message, 'error');
       }
     };
 
-    // Auth State Listener
     auth.onAuthStateChanged((user) => {
       currentUser = user;
-
       if (user) {
-        console.log('✅ Usuario autenticado:', user.email);
         authContainer.classList.add('hidden');
         appContainer.classList.remove('hidden');
-        userEmailSpan.textContent = user.email;
+        userEmail.textContent = user.email;
         loadBoards();
       } else {
-        console.log('❌ Sin usuario');
         authContainer.classList.remove('hidden');
         appContainer.classList.add('hidden');
       }
