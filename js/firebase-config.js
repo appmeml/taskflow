@@ -1,7 +1,3 @@
-// ═══════════════════════════════════════════════════════════════════
-// FIREBASE CONFIG · Reemplaza con tus credenciales desde Firebase Console
-// ═══════════════════════════════════════════════════════════════════
-
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 // TODO: Add SDKs for Firebase products that you want to use
@@ -19,40 +15,32 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-// Inicializar Firebase
-firebase.initializeApp(firebaseConfig);
 
-// Referencias globales
+firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Escuchar cambios de sesión
-auth.onAuthStateChanged((user) => {
-  if (user) {
-    // Usuario autenticado
-    window.currentUser = user;
-    document.getElementById("auth-container")?.style.display = "none";
-    document.getElementById("app-container")?.style.display = "block";
-    if (window.onUserReady) window.onUserReady(user);
-  } else {
-    // Usuario desconectado
-    window.currentUser = null;
-    document.getElementById("auth-container")?.style.display = "block";
-    document.getElementById("app-container")?.style.display = "none";
-  }
-});
-
-// Utilidades
-window.showToast = (message, type = "success") => {
-  const toast = document.createElement("div");
+window.showToast = function(message, type = 'success') {
+  const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
   toast.textContent = message;
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 3000);
 };
 
-window.showError = (error) => {
-  console.error(error);
-  const msg = error.message || "Error desconocido";
-  window.showToast(msg, "error");
+window.showError = function(error) {
+  const message = error.message || error;
+  console.error(message);
+  window.showToast(message, 'error');
 };
+
+window.currentUser = null;
+
+firebase.auth().onAuthStateChanged((user) => {
+  window.currentUser = user;
+  if (user) {
+    console.log('✅ Usuario autenticado:', user.email);
+  } else {
+    console.log('❌ Usuario NO autenticado');
+  }
+});
