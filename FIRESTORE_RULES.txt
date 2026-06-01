@@ -1,0 +1,142 @@
+// ═══════════════════════════════════════════════════════════════════
+// FIRESTORE SECURITY RULES v2 (PRODUCCIÓN)
+// Copia esto en Firebase Console → Firestore → Reglas
+// ═══════════════════════════════════════════════════════════════════
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ─── USUARIOS ──────────────────────────────────────────────────
+    match /users/{userId} {
+      // Solo el usuario puede leer sus propios datos
+      allow read: if request.auth.uid == userId;
+      // Solo el usuario puede escribir su perfil
+      allow write: if request.auth.uid == userId 
+        && validateUser(request.resource.data);
+
+      // Settings de notificación
+      match /settings/{document=**} {
+        allow read, write: if request.auth.uid == userId;
+      }
+
+      // ─── TABLEROS ──────────────────────────────────────────────
+      match /boards/{boardId} {
+        allow read: if request.auth.uid == userId;
+        allow create: if request.auth.uid == userId
+          && validateBoard(request.resource.data);
+        allow update, delete: if request.auth.uid == userId;
+
+        // Listas del tablero
+        match /lists/{listId=**} {
+          allow read: if request.auth.uid == userId;
+          allow create: if request.auth.uid == userId
+            && validateList(request.resource.data);
+          allow update: if request.auth.uid == userId
+            && validateList(request.resource.data);
+          allow delete: if request.auth.uid == userId;
+        }
+
+        // Miembros del tablero (control de roles)
+        match /members/{memberId} {
+          allow read: if request.auth.uid == userId;
+          allow create: if request.auth.uid == userId
+            && isOwner(userId, boardId)
+            && validateMember(request.resource.data);
+          allow update: if request.auth.uid == userId
+            && isOwner(userId, boardId)
+            && validateMember(request.resource.data);
+          allow delete: if request.auth.uid == userId
+            && isOwner(userId, boardId);
+        }
+
+        // Activity log (solo lectura, writes via Cloud Functions)
+        match /activity/{activityId} {
+          allow read: if request.auth.uid == userId;
+          allow write: if false; // Solo Cloud Functions
+        }
+      }
+    }
+
+    // ─── NOTIFICACIONES GLOBALES ─────────────────────────────────
+    match /notifications/{userId} {
+      allow read: if request.auth.uid == userId;
+      
+      match /messages/{notificationId} {
+        allow read: if request.auth.uid == userId;
+        allow update: if request.auth.uid == userId
+          && validateNotification(request.resource.data);
+        allow delete: if request.auth.uid == userId;
+        allow create: if false; // Solo Cloud Functions
+      }
+    }
+
+    // ─── BÚSQUEDA DE USUARIOS (para invitaciones) ────────────────
+    match /users/{userId} {
+      // Cualquier usuario autenticado puede buscar por email
+      allow read: if request.auth != null;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// FUNCIONES DE VALIDACIÓN
+// ═══════════════════════════════════════════════════════════════════
+
+function validateUser(user) {
+  return user.keys().hasAll(['email', 'name'])
+    && user.name is string && user.name.size() > 0
+    && user.email is string && user.email.matches('[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}');
+}
+
+function validateBoard(board) {
+  return board.keys().hasOnly(['title', 'background', 'createdAt'])
+    && board.title is string && board.title.size() > 0 && board.title.size() <= 100
+    && board.background is string && board.background.matches('^#[0-9a-f]{6}$')
+    && board.createdAt is timestamp;
+}
+
+function validateList(list) {
+  return list.keys().hasOnly(['title', 'position', 'createdAt'])
+    && list.title is string && list.title.size() > 0 && list.title.size() <= 100
+    && list.position is number
+    && list.createdAt is timestamp;
+}
+
+function validateMember(member) {
+  return member.keys().hasOnly(['email', 'role', 'userId', 'invitedBy', 'invitedAt', 'status'])
+    && member.email is string && member.email.matches('[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}')
+    && member.role in ['viewer', 'editor', 'owner']
+    && member.status in ['pending', 'active'];
+}
+
+function validateNotification(notif) {
+  return notif.keys().hasOnly(['type', 'message', 'read', 'createdAt', 'emailSent', 'sentAt'])
+    && notif.type in ['invite', 'activity', 'mention']
+    && notif.message is string
+    && notif.read is bool
+    && notif.createdAt is timestamp;
+}
+
+function isOwner(userId, boardId) {
+  return get(/databases/{database}/documents/users/{userId}/boards/{boardId}).data.ownerId == userId
+    || get(/databases/{database}/documents/users/{userId}/boards/{boardId}/members/{userId}).data.role == 'owner';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ESCALABILIDAD FUTURA:
+// 
+// Para "tableros compartidos reales" (múltiples usuarios editando):
+// - Crear colección global: shared_boards/{boardId}
+// - Cada usuario tiene acceso via membresía
+// - Reescribir reglas para chequear membership en shared_boards
+//
+// Para "permisos granulares":
+// - Guardar en member: { role: "editor", canDelete: false, canInvite: true }
+// - Validar por acción antes de cada write
+//
+// Para "auditoría":
+// - Activity log actual es suficiente para rastrear cambios
+// - Para compliance: usar Cloud Logging + BigQuery
+// ═══════════════════════════════════════════════════════════════════
+

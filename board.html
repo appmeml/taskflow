@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tablero · TaskFlow</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="board-navbar">
+    <button id="back-btn">← Volver</button>
+    <h1 class="board-title">Cargando…</h1>
+    <div class="navbar-spacer"></div>
+    
+    <!-- Notificaciones -->
+    <div class="notification-dropdown">
+      <button id="notification-bell" class="notification-bell">
+        🔔
+        <span class="notification-badge"></span>
+      </button>
+      <div id="notification-panel" class="notification-panel" style="display: none;">
+        <div class="notification-header">Notificaciones</div>
+        <div id="notifications-list" class="notifications-list"></div>
+      </div>
+    </div>
+
+    <!-- Membresías -->
+    <button id="members-btn" class="members-btn">👥 Miembros</button>
+  </div>
+
+  <!-- Panel de miembros (modal) -->
+  <div id="members-modal" class="modal-members" style="display: none;">
+    <div class="members-content">
+      <div class="members-header">
+        <h2>Miembros del tablero</h2>
+        <button id="close-members" class="modal-close">✕</button>
+      </div>
+
+      <div class="members-section">
+        <h3>Miembros activos</h3>
+        <div id="members-list" class="members-list"></div>
+        <button id="invite-member-btn" class="btn-invite">+ Invitar</button>
+      </div>
+
+      <!-- Feed de actividad -->
+      <div class="activity-section">
+        <h3>Actividad reciente</h3>
+        <div id="activity-feed" class="activity-feed"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="lists-container"></div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"></script>
+
+  <!-- Nuestros scripts -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/memberships.js"></script>
+  <script src="js/board.js"></script>
+</body>
+</html>
