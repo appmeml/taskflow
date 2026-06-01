@@ -343,7 +343,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"></script>
 
-  <!-- APP SCRIPT (TODO EN UNO) -->
+  <!-- APP SCRIPT -->
   <script>
     // FIREBASE CONFIG
     const firebaseConfig = {
@@ -355,15 +355,11 @@
       appId: "1:175224756577:web:3fef747dcae223c934cd20"
     };
 
-    try {
-      firebase.initializeApp(firebaseConfig);
-      var auth = firebase.auth();
-      var db = firebase.firestore();
-      console.log('✅ Firebase initialized');
-    } catch (err) {
-      console.error('❌ Firebase error:', err);
-      alert('Error: Configura Firebase correctamente');
-    }
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    console.log('✅ Firebase initialized');
 
     let currentUser = null;
     let isRegisterMode = false;
@@ -376,6 +372,7 @@
       setTimeout(() => toast.remove(), 3000);
     }
 
+    // DOM Elements
     const authForm = document.getElementById('auth-form');
     const toggleModeBtn = document.getElementById('toggle-mode');
     const authTitle = document.getElementById('auth-title');
@@ -387,6 +384,7 @@
     const appContainer = document.getElementById('app-container');
     const boardsContainer = document.getElementById('boards-container');
 
+    // Toggle Register/Login Mode
     toggleModeBtn.addEventListener('click', (e) => {
       e.preventDefault();
       isRegisterMode = !isRegisterMode;
@@ -404,11 +402,12 @@
       }
     });
 
+    // Handle Auth Form Submit
     authForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       
       const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
+      const password = document.getElementById('password').value.trim();
       const name = document.getElementById('name').value.trim();
 
       if (!email || !password) {
@@ -418,23 +417,28 @@
 
       try {
         if (isRegisterMode) {
+          // REGISTER MODE
           if (!name) {
             showToast('Por favor ingresa tu nombre', 'error');
             return;
           }
 
+          console.log('📝 Creando usuario:', email);
           const result = await auth.createUserWithEmailAndPassword(email, password);
           const user = result.user;
+          console.log('✅ Usuario creado:', user.uid);
 
           await db.collection('users').doc(user.uid).set({
             email: email,
             name: name,
             createdAt: new Date()
           });
+          console.log('✅ Usuario guardado en Firestore');
 
           showToast('✅ Cuenta creada exitosamente');
           authForm.reset();
           
+          // Reset form to login mode
           isRegisterMode = false;
           authTitle.textContent = 'Iniciar sesión';
           authBtn.textContent = 'Iniciar sesión';
@@ -442,16 +446,35 @@
           toggleModeBtn.innerHTML = '¿No tienes cuenta? <a href="#">Regístrate aquí</a>';
 
         } else {
+          // LOGIN MODE
+          console.log('🔐 Iniciando sesión:', email);
           await auth.signInWithEmailAndPassword(email, password);
+          console.log('✅ Sesión iniciada');
           showToast('✅ Sesión iniciada');
           authForm.reset();
         }
       } catch (error) {
-        console.error('Auth error:', error);
-        showToast(error.message || 'Error de autenticación', 'error');
+        console.error('❌ Auth error:', error.code, error.message);
+        
+        // Mensajes de error en español
+        let mensajeError = error.message;
+        if (error.code === 'auth/email-already-in-use') {
+          mensajeError = 'Este email ya está registrado';
+        } else if (error.code === 'auth/weak-password') {
+          mensajeError = 'La contraseña debe tener al menos 6 caracteres';
+        } else if (error.code === 'auth/user-not-found') {
+          mensajeError = 'Usuario no encontrado';
+        } else if (error.code === 'auth/wrong-password') {
+          mensajeError = 'Contraseña incorrecta';
+        } else if (error.code === 'auth/invalid-email') {
+          mensajeError = 'Email inválido';
+        }
+        
+        showToast(mensajeError, 'error');
       }
     });
 
+    // Handle Logout
     logoutBtn.addEventListener('click', async () => {
       try {
         await auth.signOut();
@@ -461,6 +484,7 @@
       }
     });
 
+    // Load Boards
     async function loadBoards() {
       if (!currentUser) return;
 
@@ -508,6 +532,7 @@
       }
     }
 
+    // Create Board
     window.createBoard = async function() {
       const name = document.getElementById('new-board-name').value.trim();
       const color = document.getElementById('new-board-color').value;
@@ -535,12 +560,14 @@
       }
     };
 
+    // Open Board
     window.openBoard = function(boardId) {
       localStorage.setItem('selectedBoardId', boardId);
       localStorage.setItem('selectedUserId', currentUser.uid);
       window.location.href = 'board.html';
     };
 
+    // Delete Board
     window.deleteBoard = async function(boardId) {
       if (!confirm('¿Eliminar este tablero?')) return;
 
@@ -559,11 +586,12 @@
       }
     };
 
+    // Auth State Listener
     auth.onAuthStateChanged((user) => {
       currentUser = user;
 
       if (user) {
-        console.log('✅ Usuario:', user.email);
+        console.log('✅ Usuario autenticado:', user.email);
         authContainer.classList.add('hidden');
         appContainer.classList.remove('hidden');
         userEmailSpan.textContent = user.email;
