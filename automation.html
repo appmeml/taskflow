@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#C9A84C"/>
+  <link rel="manifest" href="manifest.json"/>
+  <title>Automatizaciones · TaskFlow</title>
+  <style>
+    :root {
+      --gold:#C9A84C; --gold-l:#E8C97A; --gold-d:#7A5A18; --gold-dim:rgba(201,168,76,.18);
+      --bg:#0A0A0A; --s1:#111111; --s2:#1A1A1A; --s3:#222222; --s4:#2A2A2A;
+      --border:rgba(201,168,76,.18); --border-s:rgba(201,168,76,.1);
+      --text:#F0EDE6; --text-m:rgba(240,237,230,.65); --text-d:rgba(240,237,230,.35);
+      --nav-h: calc(56px + env(safe-area-inset-top, 0px));
+    }
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; min-height:100vh; }
+
+    .auto-navbar {
+      position:fixed; top:0; left:0; right:0; z-index:100;
+      height:var(--nav-h);
+      background:rgba(10,10,10,.9); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+      padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;
+      display:flex; align-items:center; gap:12px;
+      border-bottom:1px solid var(--border);
+    }
+    .nav-back {
+      background:var(--gold-dim); color:var(--gold); border:1px solid var(--border);
+      border-radius:8px; padding:6px 12px; font-size:14px; font-weight:600;
+      cursor:pointer; white-space:nowrap; flex-shrink:0; transition:background .2s;
+    }
+    .nav-back:hover { background:rgba(201,168,76,.28); }
+    .nav-title { flex:1; font-size:18px; font-weight:800; color:var(--text); }
+    .nav-title span { color:var(--gold); }
+
+    .tab-bar {
+      position:fixed; top:var(--nav-h); left:0; right:0; z-index:90;
+      background:rgba(17,17,17,.96); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+      display:flex; border-bottom:1px solid var(--border-s);
+      overflow-x:auto; scrollbar-width:none;
+    }
+    .tab-bar::-webkit-scrollbar { display:none; }
+    .tab-btn {
+      flex:1; min-width:110px; padding:12px 14px;
+      background:none; border:none; color:var(--text-m);
+      font-size:12.5px; font-weight:600; cursor:pointer;
+      border-bottom:2px solid transparent; transition:color .2s,border-color .2s; white-space:nowrap;
+    }
+    .tab-btn.active { color:var(--gold); border-bottom-color:var(--gold); }
+    .tab-badge {
+      display:inline-block; background:var(--gold-dim); color:var(--gold);
+      border-radius:10px; padding:1px 6px; font-size:11px; margin-left:4px;
+    }
+
+    .content { padding:calc(var(--nav-h) + 46px + 16px) 16px calc(90px + env(safe-area-inset-bottom,0px)); }
+
+    .auto-card {
+      background:var(--s2); border:1px solid var(--border-s); border-radius:14px;
+      padding:14px 16px; margin-bottom:10px;
+      transition:border-color .2s,box-shadow .2s;
+    }
+    .auto-card:hover { border-color:var(--gold-d); box-shadow:0 4px 18px rgba(0,0,0,.4); }
+    .auto-card-header { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+    .auto-icon { font-size:20px; flex-shrink:0; }
+    .auto-name { flex:1; font-size:14px; font-weight:700; color:var(--text); }
+    .auto-toggle {
+      width:40px; height:22px; border-radius:11px; background:var(--s4); border:none;
+      cursor:pointer; position:relative; transition:background .2s; flex-shrink:0;
+    }
+    .auto-toggle.on { background:var(--gold-d); }
+    .auto-toggle::after {
+      content:''; position:absolute; top:3px; left:3px; width:16px; height:16px;
+      border-radius:50%; background:var(--text-d); transition:transform .2s,background .2s;
+    }
+    .auto-toggle.on::after { transform:translateX(18px); background:var(--gold-l); }
+    .auto-desc { font-size:12.5px; color:var(--text-m); line-height:1.5; margin-bottom:8px; }
+    .auto-meta { display:flex; align-items:center; gap:12px; font-size:11px; color:var(--text-d); }
+    .auto-actions { display:flex; gap:6px; margin-left:auto; }
+    .auto-btn-edit, .auto-btn-del {
+      padding:4px 10px; border-radius:6px; font-size:12px; font-weight:600;
+      cursor:pointer; border:1px solid; transition:background .15s;
+    }
+    .auto-btn-edit { background:var(--gold-dim); color:var(--gold); border-color:var(--border); }
+    .auto-btn-edit:hover { background:rgba(201,168,76,.28); }
+    .auto-btn-del { background:rgba(239,83,80,.08); color:#EF5350; border-color:rgba(239,83,80,.2); }
+    .auto-btn-del:hover { background:rgba(239,83,80,.18); }
+
+    .empty-state { text-align:center; padding:60px 20px; }
+    .empty-icon { font-size:48px; margin-bottom:12px; }
+    .empty-title { font-size:16px; font-weight:700; color:var(--text); margin-bottom:6px; }
+    .empty-desc { font-size:13px; color:var(--text-d); line-height:1.5; max-width:280px; margin:0 auto; }
+
+    .fab {
+      position:fixed; bottom:calc(24px + env(safe-area-inset-bottom,0px)); right:20px;
+      width:56px; height:56px; border-radius:50%;
+      background:linear-gradient(135deg,var(--gold-l),var(--gold-d));
+      color:#000; border:none; font-size:26px; cursor:pointer; z-index:200;
+      box-shadow:0 4px 20px rgba(201,168,76,.4);
+      display:flex; align-items:center; justify-content:center;
+      transition:transform .2s,box-shadow .2s;
+    }
+    .fab:hover { transform:scale(1.08); box-shadow:0 6px 28px rgba(201,168,76,.5); }
+
+    .modal-overlay {
+      position:fixed; inset:0; z-index:500;
+      background:rgba(0,0,0,.72); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
+      display:flex; align-items:flex-end; justify-content:center;
+    }
+    .modal-sheet {
+      background:var(--s1); border-radius:20px 20px 0 0;
+      border:1px solid var(--border); border-bottom:none;
+      width:100%; max-width:640px; max-height:90vh; overflow-y:auto;
+      animation:slideUp .28s cubic-bezier(.4,0,.2,1);
+      padding-bottom:env(safe-area-inset-bottom,0px);
+    }
+    @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+    .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--s4); margin:12px auto 0; }
+    .modal-header {
+      padding:16px 20px 12px; display:flex; align-items:center; gap:12px;
+      border-bottom:1px solid var(--border-s);
+      position:sticky; top:0; background:var(--s1); z-index:1;
+    }
+    .modal-title { flex:1; font-size:17px; font-weight:800; color:var(--text); }
+    .modal-close {
+      background:var(--s3); border:1px solid var(--border-s); border-radius:50%;
+      width:30px; height:30px; cursor:pointer; color:var(--text-m);
+      display:flex; align-items:center; justify-content:center; font-size:16px;
+    }
+    .modal-body { padding:16px 20px; }
+    .modal-footer {
+      padding:14px 20px; border-top:1px solid var(--border-s);
+      display:flex; gap:8px; justify-content:flex-end;
+      position:sticky; bottom:0; background:var(--s1);
+    }
+
+    .form-section { margin-bottom:20px; }
+    .form-label {
+      display:block; font-size:11px; font-weight:700; letter-spacing:.6px;
+      text-transform:uppercase; color:var(--gold); margin-bottom:8px;
+    }
+    .form-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .form-input, .form-select {
+      width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px;
+      font-size:13.5px; font-family:inherit; outline:none; transition:border-color .2s;
+      background:var(--s2); color:var(--text);
+    }
+    .form-input:focus, .form-select:focus { border-color:var(--gold); }
+    .form-select option { background:var(--s2); }
+
+    .actions-list { display:flex; flex-direction:column; gap:8px; }
+    .action-row {
+      display:flex; gap:8px; align-items:center;
+      background:var(--s2); border:1px solid var(--border-s); border-radius:10px; padding:8px;
+      flex-wrap:wrap;
+    }
+    .action-row .form-select, .action-row .form-input { margin:0; }
+    .action-del {
+      flex-shrink:0; width:28px; height:28px;
+      background:rgba(239,83,80,.1); border:1px solid rgba(239,83,80,.2);
+      border-radius:6px; color:#EF5350; cursor:pointer; font-size:14px;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .action-del:hover { background:rgba(239,83,80,.2); }
+    .btn-add-action {
+      width:100%; padding:10px; background:rgba(201,168,76,.06);
+      border:1px dashed rgba(201,168,76,.3); border-radius:10px;
+      color:var(--gold); font-size:13px; font-weight:600; cursor:pointer;
+      transition:background .2s; margin-top:4px;
+    }
+    .btn-add-action:hover { background:rgba(201,168,76,.12); }
+
+    .btn-cancel {
+      padding:10px 18px; background:var(--s3); color:var(--text-m);
+      border:1px solid var(--border-s); border-radius:10px;
+      font-size:14px; font-weight:600; cursor:pointer;
+    }
+    .btn-save {
+      padding:10px 24px;
+      background:linear-gradient(135deg,var(--gold-l),var(--gold-d));
+      color:#000; border:none; border-radius:10px; font-size:14px; font-weight:700;
+      cursor:pointer; transition:opacity .2s;
+    }
+    .btn-save:hover { opacity:.88; }
+    .btn-save:disabled { opacity:.5; cursor:default; }
+
+    .icon-row { display:flex; align-items:center; gap:8px; }
+    .icon-preview {
+      width:42px; height:42px; border-radius:10px; background:var(--s3);
+      border:1px solid var(--border); display:flex; align-items:center;
+      justify-content:center; font-size:22px; flex-shrink:0;
+    }
+
+    .toast {
+      position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+      padding:12px 20px; border-radius:24px; font-size:14px; font-weight:600;
+      box-shadow:0 4px 20px rgba(0,0,0,.5); z-index:9999; white-space:nowrap;
+      opacity:0; transition:opacity .25s,transform .25s; pointer-events:none;
+    }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    .toast-success { background:#1B5E20; color:#fff; }
+    .toast-error { background:#B71C1C; color:#fff; }
+  </style>
+</head>
+<body>
+
+  <div class="auto-navbar">
+    <button class="nav-back" id="back-btn">← Volver</button>
+    <h1 class="nav-title"><span>⚡</span> Automatizaciones</h1>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="rule">Reglas <span class="tab-badge" id="badge-rule">0</span></button>
+    <button class="tab-btn" data-tab="card_button">Bot. tarjeta <span class="tab-badge" id="badge-card_button">0</span></button>
+    <button class="tab-btn" data-tab="board_button">Bot. tablero <span class="tab-badge" id="badge-board_button">0</span></button>
+  </div>
+
+  <div class="content" id="content"></div>
+
+  <button class="fab" id="fab-btn" title="Nueva automatización">＋</button>
+
+  <div class="modal-overlay" id="modal" style="display:none">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <span class="modal-title" id="modal-title">Nueva automatización</span>
+        <button class="modal-close" id="modal-close">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer">
+        <button class="btn-cancel" id="btn-cancel">Cancelar</button>
+        <button class="btn-save" id="btn-save">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script>
+    const boardId = new URLSearchParams(location.search).get('id') ||
+                    localStorage.getItem('selectedBoardId');
+    let activeTab  = 'rule';
+    let automations = [];
+    let boardLists  = [];
+    let editingId   = null;
+    let currentActions = [];
+    let unsubAuto = null;
+
+    function esc(s) {
+      return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+    function listName(id) {
+      return boardLists.find(l=>l.id===id)?.title || id || '?';
+    }
+    function showToastLocal(msg, type='success') {
+      document.querySelectorAll('.toast').forEach(t=>t.remove());
+      const t = document.createElement('div');
+      t.className = `toast toast-${type}`;
+      t.textContent = msg;
+      document.body.appendChild(t);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('show')));
+      setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(),300); }, 2800);
+    }
+
+    const TRIGGER_LABELS = {
+      card_moved_to_list:   'Se mueve una tarjeta a',
+      card_created_in_list: 'Se crea una tarjeta en',
+    };
+
+    function actionDesc(a) {
+      switch(a.type) {
+        case 'move_to_list':        return `→ Mover a «${listName(a.listId)}»`;
+        case 'move_to_top':         return '↑ Mover al inicio';
+        case 'move_to_bottom':      return '↓ Mover al final';
+        case 'archive_card':        return '🗑 Archivar tarjeta';
+        case 'copy_card_to_list':   return `📋 Copiar a «${listName(a.listId)}»`;
+        case 'post_comment':        return `💬 Log: «${a.text||''}»`;
+        case 'rename_prepend':      return `✏️ Anteponer «${a.text||''}»`;
+        case 'archive_all_in_list': return `🗑 Archivar todo en «${listName(a.listId)}»`;
+        case 'sort_list_by_title':  return `🔤 Ordenar «${listName(a.listId)}» A–Z`;
+        case 'move_all_to_list':    return `→ Mover todo de «${listName(a.fromListId)}» a «${listName(a.toListId)}»`;
+        default: return a.type;
+      }
+    }
+
+    function renderContent() {
+      const filtered = automations.filter(a=>a.type===activeTab);
+      const el = document.getElementById('content');
+      if (!filtered.length) {
+        const info = {
+          rule:         {icon:'⚡', title:'Sin reglas', desc:'Las reglas se activan automáticamente cuando ocurre un evento, como mover o crear una tarjeta.'},
+          card_button:  {icon:'🃏', title:'Sin botones de tarjeta', desc:'Aparecen en cada tarjeta y ejecutan acciones al hacer clic.'},
+          board_button: {icon:'📋', title:'Sin botones de tablero', desc:'Aparecen en la barra del tablero y realizan acciones masivas con un clic.'},
+        }[activeTab];
+        el.innerHTML = `<div class="empty-state">
+          <div class="empty-icon">${info.icon}</div>
+          <div class="empty-title">${info.title}</div>
+          <div class="empty-desc">${info.desc}</div>
+        </div>`;
+        return;
+      }
+      el.innerHTML = filtered.map(a => {
+        const on = a.enabled !== false;
+        let desc = '';
+        if (a.type==='rule' && a.trigger) {
+          desc = `<b>${TRIGGER_LABELS[a.trigger.type]||a.trigger.type}</b> «${listName(a.trigger.listId)}»`;
+        }
+        if (a.actions?.length) {
+          desc += (desc ? '<br>' : '') + '<b>Entonces:</b> ' + a.actions.map(actionDesc).join(' · ');
+        }
+        return `<div class="auto-card" data-id="${a.id}">
+          <div class="auto-card-header">
+            <span class="auto-icon">${esc(a.icon||'⚡')}</span>
+            <span class="auto-name">${esc(a.name||'Sin nombre')}</span>
+            <button class="auto-toggle${on?' on':''}" data-id="${a.id}" data-on="${on}" title="${on?'Desactivar':'Activar'}"></button>
+          </div>
+          ${desc ? `<div class="auto-desc">${desc}</div>` : ''}
+          <div class="auto-meta">
+            <span>▶ ${a.runCount||0} ejecuciones</span>
+            <span class="auto-actions">
+              <button class="auto-btn-edit" data-id="${a.id}">Editar</button>
+              <button class="auto-btn-del" data-id="${a.id}">Eliminar</button>
+            </span>
+          </div>
+        </div>`;
+      }).join('');
+
+      el.querySelectorAll('.auto-toggle').forEach(btn=>{
+        btn.addEventListener('click', e=>{
+          e.stopPropagation();
+          toggleEnabled(btn.dataset.id, btn.dataset.on==='true');
+        });
+      });
+      el.querySelectorAll('.auto-btn-edit').forEach(btn=>{
+        btn.addEventListener('click', e=>{ e.stopPropagation(); openModal(btn.dataset.id); });
+      });
+      el.querySelectorAll('.auto-btn-del').forEach(btn=>{
+        btn.addEventListener('click', e=>{
+          e.stopPropagation();
+          if (confirm('¿Eliminar esta automatización?')) deleteAutomation(btn.dataset.id);
+        });
+      });
+    }
+
+    function updateBadges() {
+      ['rule','card_button','board_button'].forEach(type=>{
+        const b = document.getElementById(`badge-${type}`);
+        if (b) b.textContent = automations.filter(a=>a.type===type).length;
+      });
+    }
+
+    function subscribeAutomations() {
+      if (unsubAuto) unsubAuto();
+      unsubAuto = window.db.collection('users').doc(window.currentUser.uid)
+        .collection('boards').doc(boardId).collection('automations')
+        .orderBy('createdAt','asc')
+        .onSnapshot(snap=>{
+          automations = snap.docs.map(d=>({id:d.id,...d.data()}));
+          renderContent(); updateBadges();
+        }, ()=>{ automations=[]; renderContent(); });
+    }
+
+    function subscribeLists() {
+      window.db.collection('users').doc(window.currentUser.uid)
+        .collection('boards').doc(boardId).collection('lists')
+        .orderBy('position')
+        .onSnapshot(snap=>{ boardLists = snap.docs.map(d=>({id:d.id,...d.data()})); });
+    }
+
+    async function toggleEnabled(id, currentOn) {
+      try {
+        await window.db.collection('users').doc(window.currentUser.uid)
+          .collection('boards').doc(boardId).collection('automations').doc(id)
+          .update({enabled:!currentOn});
+      } catch(e) { showToastLocal('Error','error'); }
+    }
+
+    async function deleteAutomation(id) {
+      try {
+        await window.db.collection('users').doc(window.currentUser.uid)
+          .collection('boards').doc(boardId).collection('automations').doc(id).delete();
+        showToastLocal('Automatización eliminada');
+      } catch(e) { showToastLocal('Error al eliminar','error'); }
+    }
+
+    async function saveAutomation(data) {
+      const col = window.db.collection('users').doc(window.currentUser.uid)
+        .collection('boards').doc(boardId).collection('automations');
+      if (editingId) {
+        await col.doc(editingId).update({...data, updatedAt:new Date()});
+      } else {
+        await col.add({...data, createdAt:new Date(), runCount:0, enabled:true});
+      }
+    }
+
+    // ── Builder helpers ──
+
+    function listOpts(selected) {
+      if (!boardLists.length) return '<option value="">Cargando listas…</option>';
+      return boardLists.map(l=>
+        `<option value="${l.id}"${l.id===selected?' selected':''}>${esc(l.title)}</option>`
+      ).join('');
+    }
+
+    function cardActionOpts(sel) {
+      return [
+        ['move_to_list','Mover a lista'],['move_to_top','Mover al inicio'],
+        ['move_to_bottom','Mover al final'],['archive_card','Archivar tarjeta'],
+        ['copy_card_to_list','Copiar a lista'],['post_comment','Añadir entrada al log'],
+        ['rename_prepend','Anteponer texto al título'],
+      ].map(([v,l])=>`<option value="${v}"${v===sel?' selected':''}>${l}</option>`).join('');
+    }
+
+    function boardActionOpts(sel) {
+      return [
+        ['archive_all_in_list','Archivar todas las tarjetas de una lista'],
+        ['sort_list_by_title','Ordenar lista por título (A–Z)'],
+        ['move_all_to_list','Mover todas las tarjetas a otra lista'],
+      ].map(([v,l])=>`<option value="${v}"${v===sel?' selected':''}>${l}</option>`).join('');
+    }
+
+    function actionParamHtml(a, idx, isBrd) {
+      if (isBrd) {
+        if (a.type==='archive_all_in_list'||a.type==='sort_list_by_title')
+          return `<select class="form-select ap-list" data-idx="${idx}" style="flex:1">${listOpts(a.listId)}</select>`;
+        if (a.type==='move_all_to_list')
+          return `<select class="form-select ap-from" data-idx="${idx}" style="flex:1">${listOpts(a.fromListId)}</select>
+                  <span style="color:var(--text-d);flex-shrink:0">→</span>
+                  <select class="form-select ap-to" data-idx="${idx}" style="flex:1">${listOpts(a.toListId)}</select>`;
+      } else {
+        if (a.type==='move_to_list'||a.type==='copy_card_to_list')
+          return `<select class="form-select ap-list" data-idx="${idx}" style="flex:1">${listOpts(a.listId)}</select>`;
+        if (a.type==='post_comment'||a.type==='rename_prepend')
+          return `<input class="form-input ap-text" data-idx="${idx}" placeholder="Texto…" value="${esc(a.text||'')}" style="flex:1" />`;
+      }
+      return '';
+    }
+
+    function actionsHtml(isBrd) {
+      return currentActions.map((a,i)=>`
+        <div class="action-row" data-idx="${i}">
+          <select class="form-select ap-type" data-idx="${i}" style="flex:1.5">
+            ${isBrd ? boardActionOpts(a.type) : cardActionOpts(a.type)}
+          </select>
+          <div class="ap-params" data-idx="${i}" style="display:flex;gap:8px;flex:2;align-items:center">
+            ${actionParamHtml(a,i,isBrd)}
+          </div>
+          <button class="action-del" data-idx="${i}">✕</button>
+        </div>`).join('');
+    }
+
+    function bindActions(isBrd) {
+      const list = document.getElementById('actions-list');
+      if (!list) return;
+      list.querySelectorAll('.ap-type').forEach(s=>{
+        s.addEventListener('change',()=>{
+          const i = +s.dataset.idx;
+          const t = s.value;
+          currentActions[i] = {type:t};
+          if (['move_to_list','copy_card_to_list','archive_all_in_list','sort_list_by_title'].includes(t))
+            currentActions[i].listId = boardLists[0]?.id||'';
+          if (t==='move_all_to_list') {
+            currentActions[i].fromListId = boardLists[0]?.id||'';
+            currentActions[i].toListId = boardLists[1]?.id||boardLists[0]?.id||'';
+          }
+          refreshActions(isBrd);
+        });
+      });
+      list.querySelectorAll('.ap-list').forEach(s=>{
+        s.addEventListener('change',()=>{ currentActions[+s.dataset.idx].listId=s.value; });
+      });
+      list.querySelectorAll('.ap-from').forEach(s=>{
+        s.addEventListener('change',()=>{ currentActions[+s.dataset.idx].fromListId=s.value; });
+      });
+      list.querySelectorAll('.ap-to').forEach(s=>{
+        s.addEventListener('change',()=>{ currentActions[+s.dataset.idx].toListId=s.value; });
+      });
+      list.querySelectorAll('.ap-text').forEach(inp=>{
+        inp.addEventListener('input',()=>{ currentActions[+inp.dataset.idx].text=inp.value; });
+      });
+      list.querySelectorAll('.action-del').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          currentActions.splice(+btn.dataset.idx,1);
+          refreshActions(isBrd);
+        });
+      });
+    }
+
+    function refreshActions(isBrd) {
+      document.getElementById('actions-list').innerHTML = actionsHtml(isBrd);
+      bindActions(isBrd);
+    }
+
+    function renderModalBody(auto) {
+      const isBrd = activeTab==='board_button';
+      currentActions = auto?.actions ? JSON.parse(JSON.stringify(auto.actions)) : [];
+      let html = '';
+
+      if (activeTab==='rule') {
+        const tType = auto?.trigger?.type||'card_moved_to_list';
+        const tList = auto?.trigger?.listId||'';
+        html += `<div class="form-section">
+          <label class="form-label">Nombre</label>
+          <input class="form-input" id="auto-name" placeholder="Nombre de la regla" value="${esc(auto?.name||'')}" />
+        </div>
+        <div class="form-section">
+          <label class="form-label">Cuando (disparador)</label>
+          <div class="form-row">
+            <select class="form-select" id="trigger-type" style="flex:1.4">
+              <option value="card_moved_to_list"${tType==='card_moved_to_list'?' selected':''}>Se mueve una tarjeta a</option>
+              <option value="card_created_in_list"${tType==='card_created_in_list'?' selected':''}>Se crea una tarjeta en</option>
+            </select>
+            <select class="form-select" id="trigger-list" style="flex:1">${listOpts(tList)}</select>
+          </div>
+        </div>`;
+      } else {
+        html += `<div class="form-section">
+          <label class="form-label">Nombre e ícono</label>
+          <div class="icon-row">
+            <div class="icon-preview" id="icon-preview">${esc(auto?.icon||'⚡')}</div>
+            <input class="form-input" id="auto-icon" placeholder="Emoji" value="${esc(auto?.icon||'⚡')}" maxlength="4" style="width:72px;flex:0 0 72px" />
+            <input class="form-input" id="auto-name" placeholder="Nombre del botón" value="${esc(auto?.name||'')}" style="flex:1" />
+          </div>
+        </div>`;
+      }
+
+      html += `<div class="form-section">
+        <label class="form-label">Entonces (acciones)</label>
+        <div class="actions-list" id="actions-list">${actionsHtml(isBrd)}</div>
+        <button class="btn-add-action" id="btn-add-action">＋ Añadir acción</button>
+      </div>`;
+
+      document.getElementById('modal-body').innerHTML = html;
+
+      const iconInp = document.getElementById('auto-icon');
+      const iconPrev = document.getElementById('icon-preview');
+      if (iconInp && iconPrev) {
+        iconInp.addEventListener('input',()=>{ iconPrev.textContent = iconInp.value||'⚡'; });
+      }
+
+      bindActions(isBrd);
+
+      document.getElementById('btn-add-action').addEventListener('click',()=>{
+        const defType = isBrd ? 'archive_all_in_list' : 'move_to_list';
+        const defAction = {type:defType, listId:boardLists[0]?.id||''};
+        if (isBrd && defType==='archive_all_in_list') defAction.listId = boardLists[0]?.id||'';
+        currentActions.push(defAction);
+        refreshActions(isBrd);
+      });
+    }
+
+    function openModal(editId) {
+      editingId = editId||null;
+      const auto = editId ? automations.find(a=>a.id===editId) : null;
+      document.getElementById('modal-title').textContent = editId ? 'Editar automatización' : 'Nueva automatización';
+      renderModalBody(auto);
+      document.getElementById('modal').style.display = 'flex';
+      setTimeout(()=>document.getElementById('auto-name')?.focus(), 120);
+    }
+
+    function closeModal() {
+      document.getElementById('modal').style.display = 'none';
+      editingId = null; currentActions = [];
+    }
+
+    async function onSave() {
+      const name = document.getElementById('auto-name')?.value.trim();
+      if (!name) { showToastLocal('Ingresa un nombre','error'); return; }
+      if (!currentActions.length) { showToastLocal('Agrega al menos una acción','error'); return; }
+
+      const data = {type:activeTab, name, actions:currentActions};
+      if (activeTab!=='rule') {
+        data.icon = document.getElementById('auto-icon')?.value.trim()||'⚡';
+      }
+      if (activeTab==='rule') {
+        const tType = document.getElementById('trigger-type')?.value;
+        const tList = document.getElementById('trigger-list')?.value;
+        if (!tList) { showToastLocal('Selecciona una lista','error'); return; }
+        data.trigger = {type:tType, listId:tList};
+      }
+
+      const btn = document.getElementById('btn-save');
+      btn.textContent = 'Guardando…'; btn.disabled = true;
+      try {
+        await saveAutomation(data);
+        closeModal();
+        showToastLocal(editingId ? 'Automatización actualizada' : '¡Automatización creada!');
+      } catch(e) {
+        showToastLocal('Error al guardar','error');
+        console.error(e);
+      } finally {
+        btn.textContent = 'Guardar'; btn.disabled = false;
+      }
+    }
+
+    // ── Init ──
+    window.onUserReady = () => {
+      if (!boardId) { location.href = 'index.html'; return; }
+      subscribeAutomations();
+      subscribeLists();
+    };
+
+    document.getElementById('back-btn').addEventListener('click',()=>{
+      location.href = `board.html${boardId?'?id='+boardId:''}`;
+    });
+    document.getElementById('fab-btn').addEventListener('click',()=>openModal(null));
+    document.querySelectorAll('.tab-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        activeTab = btn.dataset.tab;
+        renderContent();
+      });
+    });
+    document.getElementById('modal-close').addEventListener('click', closeModal);
+    document.getElementById('btn-cancel').addEventListener('click', closeModal);
+    document.getElementById('btn-save').addEventListener('click', onSave);
+    document.getElementById('modal').addEventListener('click', e=>{
+      if (e.target===e.currentTarget) closeModal();
+    });
+  </script>
+</body>
+</html>

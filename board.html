@@ -329,6 +329,46 @@
     .btn-send   { padding:9px 18px; background:linear-gradient(135deg,var(--gold-l),var(--gold-d)); color:#000; border:none; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; }
     .btn-whatsapp { padding:9px 14px; background:#25D366; color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; }
 
+    /* Automation bar */
+    #automation-bar {
+      position:fixed; top:var(--board-nav-h); left:0; right:0; z-index:95;
+      display:none; align-items:center; gap:8px; padding:6px 14px;
+      background:rgba(17,17,17,.92); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+      border-bottom:1px solid var(--border-s);
+      overflow-x:auto; scrollbar-width:none;
+    }
+    #automation-bar::-webkit-scrollbar { display:none; }
+    .auto-board-btn {
+      background:var(--gold-dim); color:var(--gold); border:1px solid var(--border);
+      border-radius:8px; padding:6px 14px; font-size:13px; font-weight:600;
+      cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:6px;
+      transition:background .2s; flex-shrink:0;
+    }
+    .auto-board-btn:hover { background:rgba(201,168,76,.28); }
+    .auto-btn-icon { font-size:15px; }
+
+    /* Card automation button */
+    .card-auto-btn {
+      background:none; border:none; color:var(--gold-d);
+      cursor:pointer; font-size:12px; opacity:0; transition:opacity .2s;
+      flex-shrink:0; padding:0; line-height:1; width:18px; text-align:center;
+    }
+    .card:hover .card-auto-btn { opacity:1; }
+    .card-auto-btn:hover { color:var(--gold); }
+
+    /* Card automation popup */
+    .card-auto-popup {
+      position:fixed; background:var(--s1); border:1px solid var(--border);
+      border-radius:10px; padding:6px; min-width:160px;
+      box-shadow:0 8px 24px rgba(0,0,0,.6); z-index:9000;
+    }
+    .card-auto-popup-btn {
+      width:100%; padding:8px 10px; background:none; border:none;
+      color:var(--text); font-size:13px; text-align:left; border-radius:7px;
+      cursor:pointer; display:flex; align-items:center; gap:8px; transition:background .15s;
+    }
+    .card-auto-popup-btn:hover { background:var(--s3); }
+
     /* Toast */
     .toast {
       position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
@@ -360,8 +400,12 @@
       </div>
     </div>
 
+    <button class="nav-pill" id="automation-btn" title="Automatizaciones">⚡</button>
     <button class="nav-pill" id="members-btn">👥 Miembros</button>
   </div>
+
+  <!-- ── AUTOMATION BAR ─────────────────────────── -->
+  <div id="automation-bar"></div>
 
   <!-- ── MEMBERS DRAWER ──────────────────────────── -->
   <div id="members-modal" class="modal-members" style="display:none;">
@@ -394,6 +438,7 @@
   <script src="js/firebase-config.js"></script>
   <script src="js/notifications.js"></script>
   <script src="js/memberships.js"></script>
+  <script src="js/automation-engine.js"></script>
   <script src="js/board.js"></script>
 </body>
 </html>

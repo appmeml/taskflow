@@ -1,13 +1,15 @@
-/* TaskFlow Service Worker — v2 */
-const CACHE = 'taskflow-v2';
+/* TaskFlow Service Worker — v3 */
+const CACHE = 'taskflow-v3';
 const PRECACHE = [
   '/index.html',
   '/board.html',
+  '/automation.html',
   '/calendar.html',
   '/reports.html',
   '/css/style.css',
   '/js/firebase-config.js',
   '/js/board.js',
+  '/js/automation-engine.js',
   '/js/memberships.js',
   '/js/notifications.js',
   '/js/auth.js',
@@ -38,6 +40,7 @@ self.addEventListener('fetch', e => {
   const url = e.request.url;
   // Skip Firebase, Google APIs and non-GET requests
   if (e.request.method !== 'GET') return;
+  if (e.request.mode === 'navigate') return; // let browser handle HTML navigation natively
   if (url.includes('firestore.googleapis') || url.includes('identitytoolkit') ||
       url.includes('securetoken') || url.includes('gstatic.com/firebasejs')) return;
   if (!url.startsWith(self.location.origin)) return;
