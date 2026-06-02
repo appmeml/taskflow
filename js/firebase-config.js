@@ -32,7 +32,9 @@ firebase.auth().onAuthStateChanged((user) => {
   window.currentUser = user;
   if (user) {
     console.log('✅ Usuario autenticado:', user.email);
+    if (window.onUserReady) window.onUserReady();
   } else {
-    console.log('❌ Usuario NO autenticado');
+    console.log('❌ Usuario NO autenticado — redirigiendo');
+    window.location.href = 'index.html';
   }
 });
