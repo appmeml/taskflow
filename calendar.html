@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+  <title>Calendario — TaskFlow</title>
+  <meta name="theme-color" content="#C9A84C"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <link rel="manifest" href="manifest.json"/>
+  <style>
+    :root {
+      --gold:#C9A84C; --gold-l:#E8C97A; --gold-d:#7A5A18; --gold-dim:rgba(201,168,76,.18);
+      --bg:#0A0A0A; --s1:#111111; --s2:#1A1A1A; --s3:#222222; --s4:#2A2A2A;
+      --border:rgba(201,168,76,.18); --border-s:rgba(201,168,76,.08);
+      --text:#F0EDE6; --text-m:rgba(240,237,230,.65); --text-d:rgba(240,237,230,.35);
+      --radius:14px; --nav-h:64px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      background:var(--bg);color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+      min-height:100vh;padding-bottom:calc(var(--nav-h) + 1rem);
+    }
+
+    /* ── Header ── */
+    .page-header{
+      background:var(--s1);border-bottom:1px solid var(--border);
+      padding:.9rem 1.25rem;display:flex;align-items:center;
+      justify-content:space-between;position:sticky;top:0;z-index:50;
+    }
+    .page-header h1{
+      font-size:1.15rem;font-weight:800;letter-spacing:.02em;
+      background:linear-gradient(135deg,var(--gold-l),var(--gold));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    }
+    .today-chip{
+      background:var(--gold-dim);border:1px solid var(--border);
+      border-radius:20px;padding:.3rem .75rem;font-size:.72rem;
+      color:var(--gold);font-weight:600;cursor:pointer;
+    }
+
+    /* ── Month navigation ── */
+    .month-nav{
+      display:flex;align-items:center;gap:.75rem;
+      padding:1rem 1.25rem .5rem;
+    }
+    .month-nav button{
+      background:var(--s2);border:1px solid var(--border);color:var(--gold);
+      width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:1.3rem;
+      display:flex;align-items:center;justify-content:center;line-height:1;
+      transition:background .15s;flex-shrink:0;
+    }
+    .month-nav button:hover{background:var(--s3);}
+    .month-title{
+      flex:1;text-align:center;font-size:1.1rem;font-weight:700;
+      color:var(--text);text-transform:capitalize;letter-spacing:.01em;
+    }
+
+    /* ── Board filter ── */
+    .filter-bar{padding:.5rem 1.25rem .75rem;}
+    .filter-bar select{
+      width:100%;background:var(--s2);border:1px solid var(--border);
+      color:var(--text);padding:.55rem .85rem;border-radius:10px;
+      font-size:.9rem;cursor:pointer;outline:none;
+    }
+    .filter-bar select:focus{border-color:var(--gold);}
+    .filter-bar select option{background:var(--s1);}
+
+    /* ── Calendar grid ── */
+    .calendar-wrap{padding:0 1rem 1rem;}
+    .weekdays{
+      display:grid;grid-template-columns:repeat(7,1fr);
+      text-align:center;margin-bottom:.5rem;
+    }
+    .weekdays span{
+      font-size:.68rem;font-weight:700;color:var(--gold);
+      letter-spacing:.05em;text-transform:uppercase;padding:.4rem 0;
+    }
+    .calendar-grid{
+      display:grid;grid-template-columns:repeat(7,1fr);gap:4px;
+    }
+    .cal-day{
+      aspect-ratio:1;background:var(--s2);border:1px solid var(--border-s);
+      border-radius:10px;display:flex;flex-direction:column;
+      align-items:center;padding:6px 3px 4px;cursor:pointer;
+      transition:background .15s,border-color .15s;min-height:44px;
+    }
+    .cal-day.empty{background:transparent;border-color:transparent;cursor:default;}
+    .cal-day:not(.empty):hover{background:var(--s3);border-color:var(--gold-d);}
+    .cal-day.today{border-color:var(--gold);background:rgba(201,168,76,.08);}
+    .cal-day.has-activity{background:rgba(201,168,76,.07);}
+    .cal-day.today.has-activity{background:rgba(201,168,76,.14);}
+    .day-num{
+      font-size:.8rem;font-weight:600;color:var(--text);line-height:1;
+    }
+    .cal-day.today .day-num{color:var(--gold);font-weight:800;}
+    .cal-day.other-month .day-num{color:var(--text-d);}
+    .dots{
+      display:flex;gap:2px;flex-wrap:wrap;justify-content:center;margin-top:3px;
+    }
+    .dot{
+      width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0;
+    }
+    .dot.many{background:var(--gold-l);}
+    .dot.type-create{background:#4CAF50;}
+    .dot.type-move{background:#2196F3;}
+    .dot.type-delete{background:#F44336;}
+
+    /* ── Detail drawer ── */
+    .overlay{
+      display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);
+      z-index:200;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+    }
+    .overlay.open{display:flex;align-items:flex-end;}
+    .sheet{
+      background:var(--s1);border:1px solid var(--border);border-bottom:none;
+      border-radius:var(--radius) var(--radius) 0 0;width:100%;
+      max-height:72vh;overflow-y:auto;padding:1.25rem;
+      animation:slideUp .25s ease;
+    }
+    @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    .sheet-handle{
+      width:40px;height:4px;background:var(--s4);border-radius:2px;
+      margin:0 auto 1.25rem;
+    }
+    .sheet h3{
+      font-size:1rem;font-weight:700;color:var(--gold);margin-bottom:.25rem;
+      text-transform:capitalize;
+    }
+    .sheet .sheet-sub{font-size:.8rem;color:var(--text-d);margin-bottom:1rem;}
+    .sheet-close{
+      float:right;background:none;border:none;color:var(--text-m);
+      font-size:1.5rem;cursor:pointer;line-height:1;margin-top:-6px;
+    }
+    .act-list{display:flex;flex-direction:column;gap:.55rem;}
+    .act-item{
+      background:var(--s2);border:1px solid var(--border-s);border-radius:10px;
+      padding:.75rem 1rem;
+    }
+    .act-item-time{font-size:.7rem;color:var(--text-d);margin-bottom:.25rem;}
+    .act-item-desc{font-size:.88rem;color:var(--text);line-height:1.4;}
+    .act-item-board{
+      display:inline-block;margin-top:.35rem;font-size:.72rem;
+      color:var(--gold);background:var(--gold-dim);border-radius:6px;
+      padding:.15rem .5rem;
+    }
+    .act-badge{
+      display:inline-block;width:8px;height:8px;border-radius:50%;
+      margin-right:.4rem;vertical-align:middle;flex-shrink:0;
+    }
+    .badge-create{background:#4CAF50;}
+    .badge-move{background:#2196F3;}
+    .badge-delete{background:#F44336;}
+    .badge-other{background:var(--gold);}
+    .empty-state{
+      text-align:center;color:var(--text-d);padding:2.5rem 1rem;font-size:.9rem;
+    }
+    .empty-state .empty-ico{font-size:2.5rem;display:block;margin-bottom:.75rem;}
+
+    /* ── Bottom nav ── */
+    .bottom-nav{
+      position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);
+      background:var(--s1);border-top:1px solid var(--border);
+      display:flex;align-items:stretch;z-index:100;
+    }
+    .nav-item{
+      flex:1;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;gap:3px;text-decoration:none;
+      color:var(--text-d);font-size:.6rem;font-weight:700;letter-spacing:.04em;
+      text-transform:uppercase;transition:color .15s;border:none;
+      background:none;cursor:pointer;padding:0;
+    }
+    .nav-icon{font-size:1.25rem;line-height:1;}
+    .nav-item.active{color:var(--gold);}
+    .nav-item:hover:not(.active){color:var(--text-m);}
+
+    /* ── Loading ── */
+    .loading-state{text-align:center;padding:3rem;color:var(--text-d);}
+    .spinner{
+      width:28px;height:28px;border:3px solid var(--s3);
+      border-top-color:var(--gold);border-radius:50%;
+      animation:spin .8s linear infinite;margin:0 auto 1rem;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>Calendario</h1>
+    <button class="today-chip" id="go-today">Hoy</button>
+  </div>
+
+  <div class="month-nav">
+    <button id="prev-month" aria-label="Mes anterior">‹</button>
+    <div class="month-title" id="month-title">—</div>
+    <button id="next-month" aria-label="Mes siguiente">›</button>
+  </div>
+
+  <div class="filter-bar">
+    <select id="board-filter">
+      <option value="">Todos los tableros</option>
+    </select>
+  </div>
+
+  <div class="calendar-wrap">
+    <div class="weekdays">
+      <span>Dom</span><span>Lun</span><span>Mar</span><span>Mié</span>
+      <span>Jue</span><span>Vie</span><span>Sáb</span>
+    </div>
+    <div class="calendar-grid" id="calendar-grid">
+      <div class="loading-state" style="grid-column:1/-1">
+        <div class="spinner"></div>
+        Cargando actividades…
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail drawer -->
+  <div class="overlay" id="overlay">
+    <div class="sheet" id="sheet">
+      <div class="sheet-handle"></div>
+      <button class="sheet-close" id="sheet-close">×</button>
+      <h3 id="sheet-date-title">—</h3>
+      <p class="sheet-sub" id="sheet-count-label"></p>
+      <div class="act-list" id="sheet-act-list"></div>
+    </div>
+  </div>
+
+  <!-- Bottom nav -->
+  <nav class="bottom-nav">
+    <a class="nav-item" href="index.html"><span class="nav-icon">⊞</span>Tableros</a>
+    <a class="nav-item active" href="calendar.html"><span class="nav-icon">📅</span>Calendario</a>
+    <a class="nav-item" href="reports.html"><span class="nav-icon">📊</span>Informes</a>
+    <a class="nav-item" href="index.html#activity"><span class="nav-icon">🔔</span>Actividad</a>
+    <a class="nav-item" href="index.html#account"><span class="nav-icon">👤</span>Cuenta</a>
+  </nav>
+
+  <!-- Firebase compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script>
+  (function() {
+    'use strict';
+
+    let currentYear, currentMonth;
+    let allBoards = [];
+    let activityMap = {}; // "YYYY-MM-DD" → [{...}]
+    let selectedBoard = '';
+    let unsubscribers = [];
+
+    const grid     = document.getElementById('calendar-grid');
+    const mTitle   = document.getElementById('month-title');
+    const overlay  = document.getElementById('overlay');
+    const sheet    = document.getElementById('sheet');
+    const sheetTitle = document.getElementById('sheet-date-title');
+    const sheetCount = document.getElementById('sheet-count-label');
+    const sheetList  = document.getElementById('sheet-act-list');
+    const boardFilter = document.getElementById('board-filter');
+
+    // Activity type helpers
+    function getTypeClass(type) {
+      if (!type) return 'badge-other';
+      if (type.includes('create') || type.includes('add')) return 'badge-create';
+      if (type.includes('move') || type.includes('update') || type.includes('edit')) return 'badge-move';
+      if (type.includes('delete') || type.includes('remove')) return 'badge-delete';
+      return 'badge-other';
+    }
+    function getDotClass(type) {
+      if (!type) return '';
+      if (type.includes('create') || type.includes('add')) return 'type-create';
+      if (type.includes('move') || type.includes('update') || type.includes('edit')) return 'type-move';
+      if (type.includes('delete') || type.includes('remove')) return 'type-delete';
+      return '';
+    }
+    function describeActivity(act) {
+      const map = {
+        card_create: 'Tarjeta creada',
+        card_update: 'Tarjeta actualizada',
+        card_move: 'Tarjeta movida',
+        card_delete: 'Tarjeta eliminada',
+        list_create: 'Lista creada',
+        list_update: 'Lista actualizada',
+        list_delete: 'Lista eliminada',
+        board_update: 'Tablero actualizado',
+        member_invite: 'Miembro invitado',
+        member_remove: 'Miembro eliminado',
+      };
+      const prefix = map[act.type] || act.type || 'Actividad';
+      return act.target ? `${prefix}: <strong>${act.target}</strong>` : prefix;
+    }
+
+    // Format date key
+    function dateKey(ts) {
+      const d = ts && ts.toDate ? ts.toDate() : new Date(ts);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+    function formatTime(ts) {
+      const d = ts && ts.toDate ? ts.toDate() : new Date(ts);
+      return d.toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'});
+    }
+
+    // Load activities from all boards (or filtered board)
+    function clearListeners() {
+      unsubscribers.forEach(u => u());
+      unsubscribers = [];
+    }
+    function loadActivities() {
+      clearListeners();
+      activityMap = {};
+      const uid = window.currentUser.uid;
+      const boardsToQuery = selectedBoard
+        ? allBoards.filter(b => b.id === selectedBoard)
+        : allBoards;
+
+      if (!boardsToQuery.length) { renderCalendar(); return; }
+
+      let loaded = 0;
+      boardsToQuery.forEach(board => {
+        const unsub = window.db
+          .collection('users').doc(uid)
+          .collection('boards').doc(board.id)
+          .collection('activity')
+          .orderBy('timestamp', 'desc')
+          .limit(500)
+          .onSnapshot(snap => {
+            snap.forEach(doc => {
+              const act = { id: doc.id, boardId: board.id, boardTitle: board.title, ...doc.data() };
+              if (!act.timestamp) return;
+              const key = dateKey(act.timestamp);
+              if (!activityMap[key]) activityMap[key] = [];
+              const existing = activityMap[key].findIndex(a => a.id === act.id && a.boardId === board.id);
+              if (existing >= 0) activityMap[key][existing] = act;
+              else activityMap[key].push(act);
+            });
+            loaded++;
+            if (loaded >= boardsToQuery.length) renderCalendar();
+          }, () => {
+            loaded++;
+            if (loaded >= boardsToQuery.length) renderCalendar();
+          });
+        unsubscribers.push(unsub);
+      });
+    }
+
+    // Render calendar grid
+    function renderCalendar() {
+      const now = new Date();
+      const todayKey = dateKey(now);
+      const y = currentYear, m = currentMonth;
+      const firstDay = new Date(y, m, 1).getDay(); // 0=Sun
+      const daysInMonth = new Date(y, m+1, 0).getDate();
+
+      const fmt = new Intl.DateTimeFormat('es', { month: 'long', year: 'numeric' });
+      mTitle.textContent = fmt.format(new Date(y, m, 1));
+
+      let html = '';
+      // Empty cells before first day
+      for (let i = 0; i < firstDay; i++) html += '<div class="cal-day empty"></div>';
+      // Day cells
+      for (let d = 1; d <= daysInMonth; d++) {
+        const key = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const acts = activityMap[key] || [];
+        const isToday = key === todayKey;
+        const hasAct = acts.length > 0;
+        let cls = 'cal-day';
+        if (isToday) cls += ' today';
+        if (hasAct) cls += ' has-activity';
+
+        let dots = '';
+        if (hasAct) {
+          const shown = acts.slice(0, 3);
+          shown.forEach(a => {
+            dots += `<div class="dot ${getDotClass(a.type)}"></div>`;
+          });
+          if (acts.length > 3) dots += `<div class="dot many"></div>`;
+        }
+
+        html += `<div class="${cls}" data-key="${key}" data-day="${d}">
+          <span class="day-num">${d}</span>
+          ${hasAct ? `<div class="dots">${dots}</div>` : ''}
+        </div>`;
+      }
+      grid.innerHTML = html;
+
+      // Attach click handlers
+      grid.querySelectorAll('.cal-day:not(.empty)').forEach(cell => {
+        cell.addEventListener('click', () => openDay(cell.dataset.key, cell.dataset.day));
+      });
+    }
+
+    // Open day detail
+    function openDay(key, dayNum) {
+      const acts = activityMap[key] || [];
+      const [y, m, d] = key.split('-');
+      const dateLabel = new Date(+y, +m-1, +d).toLocaleDateString('es', {
+        weekday:'long', day:'numeric', month:'long', year:'numeric'
+      });
+      sheetTitle.textContent = dateLabel;
+      sheetCount.textContent = acts.length
+        ? `${acts.length} evento${acts.length !== 1 ? 's' : ''}`
+        : '';
+
+      if (!acts.length) {
+        sheetList.innerHTML = '<div class="empty-state"><span class="empty-ico">📭</span>Sin actividad este día</div>';
+      } else {
+        const sorted = [...acts].sort((a,b) => {
+          const ta = a.timestamp?.toDate?.() || new Date(a.timestamp);
+          const tb = b.timestamp?.toDate?.() || new Date(b.timestamp);
+          return tb - ta;
+        });
+        sheetList.innerHTML = sorted.map(act => `
+          <div class="act-item">
+            <div class="act-item-time">${formatTime(act.timestamp)}</div>
+            <div class="act-item-desc">
+              <span class="act-badge ${getTypeClass(act.type)}"></span>
+              ${describeActivity(act)}
+              ${act.userName ? `<span style="color:var(--text-d);font-size:.75rem"> · ${act.userName}</span>` : ''}
+            </div>
+            ${act.boardTitle ? `<span class="act-item-board">${act.boardTitle}</span>` : ''}
+          </div>
+        `).join('');
+      }
+
+      overlay.classList.add('open');
+    }
+
+    // Close drawer
+    function closeOverlay() { overlay.classList.remove('open'); }
+    document.getElementById('sheet-close').addEventListener('click', closeOverlay);
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeOverlay(); });
+
+    // Month navigation
+    document.getElementById('prev-month').addEventListener('click', () => {
+      currentMonth--;
+      if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+      renderCalendar();
+    });
+    document.getElementById('next-month').addEventListener('click', () => {
+      currentMonth++;
+      if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+      renderCalendar();
+    });
+    document.getElementById('go-today').addEventListener('click', () => {
+      const now = new Date();
+      currentYear = now.getFullYear();
+      currentMonth = now.getMonth();
+      renderCalendar();
+    });
+
+    // Board filter
+    boardFilter.addEventListener('change', () => {
+      selectedBoard = boardFilter.value;
+      activityMap = {};
+      loadActivities();
+    });
+
+    // Init after auth
+    window.onUserReady = function() {
+      const uid = window.currentUser.uid;
+      const now = new Date();
+      currentYear = now.getFullYear();
+      currentMonth = now.getMonth();
+
+      window.db.collection('users').doc(uid).collection('boards')
+        .orderBy('title').get().then(snap => {
+          allBoards = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          allBoards.forEach(b => {
+            const opt = document.createElement('option');
+            opt.value = b.id;
+            opt.textContent = b.title;
+            boardFilter.appendChild(opt);
+          });
+          loadActivities();
+        }).catch(() => renderCalendar());
+    };
+  })();
+  </script>
+</body>
+</html>

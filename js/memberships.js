@@ -237,6 +237,7 @@ const MembershipsModule = window.MembershipsModule = (() => {
         </div>
         <div class="modal-footer">
           <button class="btn-cancel">Cancelar</button>
+          <button class="btn-whatsapp">📱 WhatsApp</button>
           <button class="btn-send">Enviar invitación</button>
         </div>
       </div>
@@ -245,6 +246,7 @@ const MembershipsModule = window.MembershipsModule = (() => {
     const closeBtn = modal.querySelector(".modal-close");
     const cancelBtn = modal.querySelector(".btn-cancel");
     const sendBtn = modal.querySelector(".btn-send");
+    const waBtn = modal.querySelector(".btn-whatsapp");
     const emailInput = modal.querySelector("#invite-email");
     const roleSelect = modal.querySelector("#invite-role");
 
@@ -273,6 +275,13 @@ const MembershipsModule = window.MembershipsModule = (() => {
 
       sendInvitation(email, role);
       close();
+    });
+
+    waBtn.addEventListener("click", () => {
+      const boardName = currentBoard ? currentBoard.title : "un tablero";
+      const from = window.currentUser ? window.currentUser.email : "alguien";
+      const text = `¡Hola! ${from} te invita a colaborar en el tablero *"${boardName}"* en TaskFlow. Inicia sesión en la app para aceptar la invitación.`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
     });
 
     document.body.appendChild(modal);
