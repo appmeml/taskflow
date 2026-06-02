@@ -1,0 +1,49 @@
+{
+  "name": "TaskFlow",
+  "short_name": "TaskFlow",
+  "description": "Gestor de tareas en tableros Kanban — premium",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0A0A0A",
+  "theme_color": "#C9A84C",
+  "orientation": "portrait-primary",
+  "categories": ["productivity", "business"],
+  "lang": "es",
+  "icons": [
+    {
+      "src": "logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Mis tableros",
+      "short_name": "Tableros",
+      "url": "/index.html",
+      "icons": [{ "src": "logo.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Calendario",
+      "short_name": "Calendario",
+      "url": "/calendar.html",
+      "icons": [{ "src": "logo.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Informes",
+      "short_name": "Informes",
+      "url": "/reports.html",
+      "icons": [{ "src": "logo.svg", "sizes": "any", "type": "image/svg+xml" }]
+    }
+  ],
+  "screenshots": [],
+  "related_applications": []
+}

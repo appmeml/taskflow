@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+  <title>Informes — TaskFlow</title>
+  <meta name="theme-color" content="#C9A84C"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <link rel="manifest" href="manifest.json"/>
+  <style>
+    :root {
+      --gold:#C9A84C; --gold-l:#E8C97A; --gold-d:#7A5A18; --gold-dim:rgba(201,168,76,.18);
+      --bg:#0A0A0A; --s1:#111111; --s2:#1A1A1A; --s3:#222222; --s4:#2A2A2A;
+      --border:rgba(201,168,76,.18); --border-s:rgba(201,168,76,.08);
+      --text:#F0EDE6; --text-m:rgba(240,237,230,.65); --text-d:rgba(240,237,230,.35);
+      --green:#4CAF50; --blue:#2196F3; --red:#F44336; --orange:#FF9800;
+      --radius:14px; --nav-h:64px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      background:var(--bg);color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+      min-height:100vh;padding-bottom:calc(var(--nav-h) + 1rem);
+    }
+
+    /* ── Header ── */
+    .page-header{
+      background:var(--s1);border-bottom:1px solid var(--border);
+      padding:.9rem 1.25rem;display:flex;align-items:center;
+      justify-content:space-between;position:sticky;top:0;z-index:50;
+    }
+    .page-header h1{
+      font-size:1.15rem;font-weight:800;letter-spacing:.02em;
+      background:linear-gradient(135deg,var(--gold-l),var(--gold));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    }
+    .header-actions{display:flex;gap:.5rem;}
+    .btn-icon{
+      background:var(--s2);border:1px solid var(--border);color:var(--text-m);
+      width:36px;height:36px;border-radius:10px;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;font-size:1rem;
+      transition:background .15s,color .15s;
+    }
+    .btn-icon:hover{background:var(--s3);color:var(--gold);}
+
+    /* ── Filters ── */
+    .filters{
+      background:var(--s1);border-bottom:1px solid var(--border-s);
+      padding:.75rem 1.25rem;display:flex;flex-direction:column;gap:.6rem;
+    }
+    .filters-row{display:flex;gap:.6rem;}
+    .filter-group{flex:1;}
+    .filter-label{
+      font-size:.68rem;font-weight:700;color:var(--gold);
+      letter-spacing:.06em;text-transform:uppercase;margin-bottom:.35rem;
+      display:block;
+    }
+    .filter-group input,
+    .filter-group select{
+      width:100%;background:var(--s2);border:1px solid var(--border);
+      color:var(--text);padding:.55rem .75rem;border-radius:10px;
+      font-size:.85rem;cursor:pointer;outline:none;
+    }
+    .filter-group input:focus,
+    .filter-group select:focus{border-color:var(--gold);}
+    .filter-group select option{background:var(--s1);}
+    .filter-group input[type="date"]::-webkit-calendar-picker-indicator{
+      filter:invert(1) sepia(1) saturate(2) hue-rotate(5deg);opacity:.7;cursor:pointer;
+    }
+    .btn-apply{
+      background:linear-gradient(135deg,var(--gold-l),var(--gold-d));
+      border:none;color:#000;padding:.6rem 1.25rem;border-radius:10px;
+      font-size:.85rem;font-weight:700;cursor:pointer;letter-spacing:.03em;
+      width:100%;margin-top:.25rem;transition:opacity .15s;
+    }
+    .btn-apply:hover{opacity:.88;}
+
+    /* ── Stats cards ── */
+    .stats-section{padding:1rem 1.25rem .25rem;}
+    .stats-title{
+      font-size:.72rem;font-weight:700;color:var(--gold);
+      letter-spacing:.08em;text-transform:uppercase;margin-bottom:.75rem;
+    }
+    .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;}
+    .stat-card{
+      background:var(--s2);border:1px solid var(--border-s);border-radius:var(--radius);
+      padding:.9rem 1rem;display:flex;flex-direction:column;gap:.25rem;
+    }
+    .stat-card.gold{border-color:var(--border);}
+    .stat-icon{font-size:1.4rem;margin-bottom:.15rem;}
+    .stat-value{
+      font-size:1.6rem;font-weight:800;
+      background:linear-gradient(135deg,var(--gold-l),var(--gold));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      line-height:1;
+    }
+    .stat-card:nth-child(2) .stat-value{
+      background:linear-gradient(135deg,#6EE7B7,var(--green));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    }
+    .stat-card:nth-child(3) .stat-value{
+      background:linear-gradient(135deg,#93C5FD,var(--blue));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    }
+    .stat-card:nth-child(4) .stat-value{
+      background:linear-gradient(135deg,#FCA5A5,var(--red));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    }
+    .stat-label{font-size:.75rem;color:var(--text-d);font-weight:600;}
+
+    /* ── Activity table ── */
+    .table-section{padding:.75rem 1.25rem 1rem;}
+    .section-header{
+      display:flex;align-items:center;justify-content:space-between;
+      margin-bottom:.75rem;
+    }
+    .section-title{
+      font-size:.72rem;font-weight:700;color:var(--gold);
+      letter-spacing:.08em;text-transform:uppercase;
+    }
+    .result-count{font-size:.75rem;color:var(--text-d);}
+    .table-wrap{
+      background:var(--s2);border:1px solid var(--border-s);border-radius:var(--radius);
+      overflow:hidden;
+    }
+    .table-scroll{overflow-x:auto;}
+    table{width:100%;border-collapse:collapse;min-width:560px;}
+    thead tr{background:var(--s1);border-bottom:1px solid var(--border);}
+    thead th{
+      padding:.65rem 1rem;text-align:left;font-size:.7rem;font-weight:700;
+      color:var(--gold);letter-spacing:.05em;text-transform:uppercase;
+      white-space:nowrap;
+    }
+    tbody tr{border-bottom:1px solid var(--border-s);transition:background .1s;}
+    tbody tr:last-child{border-bottom:none;}
+    tbody tr:hover{background:var(--s3);}
+    tbody td{
+      padding:.65rem 1rem;font-size:.82rem;color:var(--text);
+      vertical-align:middle;
+    }
+    td.td-time{color:var(--text-d);font-size:.75rem;white-space:nowrap;}
+    td.td-board{
+      color:var(--gold);font-size:.78rem;max-width:120px;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    }
+    td.td-user{color:var(--text-m);font-size:.78rem;white-space:nowrap;}
+    .act-type-badge{
+      display:inline-block;padding:.15rem .55rem;border-radius:20px;
+      font-size:.68rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+    }
+    .act-type-badge.type-create{background:rgba(76,175,80,.2);color:#4CAF50;}
+    .act-type-badge.type-move{background:rgba(33,150,243,.2);color:#2196F3;}
+    .act-type-badge.type-delete{background:rgba(244,67,54,.2);color:#F44336;}
+    .act-type-badge.type-other{background:var(--gold-dim);color:var(--gold);}
+    td.td-target{
+      max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    }
+    .empty-table{
+      text-align:center;padding:3rem;color:var(--text-d);font-size:.9rem;
+    }
+    .empty-table .empty-ico{font-size:2.5rem;display:block;margin-bottom:.75rem;}
+
+    /* ── Pagination ── */
+    .pagination{
+      display:flex;align-items:center;justify-content:center;
+      gap:.5rem;padding:.75rem;border-top:1px solid var(--border-s);
+    }
+    .pg-btn{
+      background:var(--s3);border:1px solid var(--border-s);color:var(--text-m);
+      padding:.4rem .85rem;border-radius:8px;cursor:pointer;font-size:.8rem;
+      transition:background .15s,color .15s;
+    }
+    .pg-btn:hover:not(:disabled){background:var(--s4);color:var(--gold);}
+    .pg-btn:disabled{opacity:.35;cursor:default;}
+    .pg-info{font-size:.78rem;color:var(--text-d);}
+
+    /* ── Bottom nav ── */
+    .bottom-nav{
+      position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);
+      background:var(--s1);border-top:1px solid var(--border);
+      display:flex;align-items:stretch;z-index:100;
+    }
+    .nav-item{
+      flex:1;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;gap:3px;text-decoration:none;
+      color:var(--text-d);font-size:.6rem;font-weight:700;letter-spacing:.04em;
+      text-transform:uppercase;transition:color .15s;border:none;
+      background:none;cursor:pointer;padding:0;
+    }
+    .nav-icon{font-size:1.25rem;line-height:1;}
+    .nav-item.active{color:var(--gold);}
+    .nav-item:hover:not(.active){color:var(--text-m);}
+
+    /* ── Loading ── */
+    .loading-overlay{
+      display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);
+      z-index:300;align-items:center;justify-content:center;
+    }
+    .loading-overlay.show{display:flex;}
+    .spinner{
+      width:36px;height:36px;border:4px solid var(--s3);
+      border-top-color:var(--gold);border-radius:50%;
+      animation:spin .8s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    @media print {
+      .page-header,.filters,.bottom-nav,.header-actions,.btn-apply,.pagination{display:none!important;}
+      body{padding:0;background:#fff;color:#000;}
+      .stats-grid{grid-template-columns:repeat(4,1fr);}
+      .table-wrap{border:1px solid #ccc;}
+      thead tr{background:#f5f5f5;}
+      thead th,.stat-value,.stat-label,.section-title{color:#333!important;-webkit-text-fill-color:#333!important;}
+      .act-type-badge{border:1px solid #ccc;}
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>Informes</h1>
+    <div class="header-actions">
+      <button class="btn-icon" id="btn-csv" title="Exportar CSV">⬇</button>
+      <button class="btn-icon" id="btn-print" title="Imprimir">🖨</button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filters-row">
+      <div class="filter-group">
+        <label class="filter-label" for="date-from">Desde</label>
+        <input type="date" id="date-from"/>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label" for="date-to">Hasta</label>
+        <input type="date" id="date-to"/>
+      </div>
+    </div>
+    <div class="filter-group">
+      <label class="filter-label" for="board-filter">Tablero</label>
+      <select id="board-filter">
+        <option value="">Todos los tableros</option>
+      </select>
+    </div>
+    <button class="btn-apply" id="btn-apply">Generar informe</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-section">
+    <div class="stats-title">Resumen del período</div>
+    <div class="stats-grid">
+      <div class="stat-card gold">
+        <span class="stat-icon">⚡</span>
+        <span class="stat-value" id="stat-total">—</span>
+        <span class="stat-label">Total acciones</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">✅</span>
+        <span class="stat-value" id="stat-create">—</span>
+        <span class="stat-label">Creaciones</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">↕️</span>
+        <span class="stat-value" id="stat-move">—</span>
+        <span class="stat-label">Movimientos</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">🗑</span>
+        <span class="stat-value" id="stat-delete">—</span>
+        <span class="stat-label">Eliminaciones</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Activity table -->
+  <div class="table-section">
+    <div class="section-header">
+      <span class="section-title">Registro de actividad</span>
+      <span class="result-count" id="result-count"></span>
+    </div>
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha / Hora</th>
+              <th>Tablero</th>
+              <th>Usuario</th>
+              <th>Tipo</th>
+              <th>Destino</th>
+            </tr>
+          </thead>
+          <tbody id="activity-tbody">
+            <tr><td colspan="5" class="empty-table">
+              <span class="empty-ico">📊</span>
+              Selecciona un período y genera el informe
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination" style="display:none">
+        <button class="pg-btn" id="pg-prev" disabled>‹ Anterior</button>
+        <span class="pg-info" id="pg-info"></span>
+        <button class="pg-btn" id="pg-next">Siguiente ›</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Bottom nav -->
+  <nav class="bottom-nav">
+    <a class="nav-item" href="index.html"><span class="nav-icon">⊞</span>Tableros</a>
+    <a class="nav-item" href="calendar.html"><span class="nav-icon">📅</span>Calendario</a>
+    <a class="nav-item active" href="reports.html"><span class="nav-icon">📊</span>Informes</a>
+    <a class="nav-item" href="index.html#activity"><span class="nav-icon">🔔</span>Actividad</a>
+    <a class="nav-item" href="index.html#account"><span class="nav-icon">👤</span>Cuenta</a>
+  </nav>
+
+  <!-- Firebase compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script>
+  (function() {
+    'use strict';
+
+    const PAGE_SIZE = 50;
+    let allBoards = [];
+    let reportRows = [];
+    let currentPage = 0;
+
+    const tbody        = document.getElementById('activity-tbody');
+    const boardFilter  = document.getElementById('board-filter');
+    const dateFrom     = document.getElementById('date-from');
+    const dateTo       = document.getElementById('date-to');
+    const loadingEl    = document.getElementById('loading-overlay');
+    const statTotal    = document.getElementById('stat-total');
+    const statCreate   = document.getElementById('stat-create');
+    const statMove     = document.getElementById('stat-move');
+    const statDelete   = document.getElementById('stat-delete');
+    const resultCount  = document.getElementById('result-count');
+    const paginationEl = document.getElementById('pagination');
+    const pgPrev       = document.getElementById('pg-prev');
+    const pgNext       = document.getElementById('pg-next');
+    const pgInfo       = document.getElementById('pg-info');
+
+    // Set default date range (last 30 days)
+    function setDefaultDates() {
+      const now = new Date();
+      const from = new Date(now);
+      from.setDate(from.getDate() - 30);
+      dateTo.value = now.toISOString().slice(0,10);
+      dateFrom.value = from.toISOString().slice(0,10);
+    }
+
+    // Type classification
+    function classifyType(type) {
+      if (!type) return 'other';
+      if (type.includes('create') || type.includes('add')) return 'create';
+      if (type.includes('move') || type.includes('update') || type.includes('edit')) return 'move';
+      if (type.includes('delete') || type.includes('remove')) return 'delete';
+      return 'other';
+    }
+    function typeBadge(type) {
+      const cls = classifyType(type);
+      const labels = { create:'Creación', move:'Movimiento', delete:'Eliminación', other:'Otro' };
+      return `<span class="act-type-badge type-${cls}">${labels[cls]}</span>`;
+    }
+    function formatDateTime(ts) {
+      const d = ts && ts.toDate ? ts.toDate() : new Date(ts);
+      return d.toLocaleString('es', {
+        day:'2-digit', month:'2-digit', year:'numeric',
+        hour:'2-digit', minute:'2-digit'
+      });
+    }
+    function describeType(type) {
+      const map = {
+        card_create:'Tarjeta creada', card_update:'Tarjeta actualizada',
+        card_move:'Tarjeta movida', card_delete:'Tarjeta eliminada',
+        list_create:'Lista creada', list_update:'Lista actualizada',
+        list_delete:'Lista eliminada', board_update:'Tablero actualizado',
+        member_invite:'Miembro invitado', member_remove:'Miembro eliminado',
+      };
+      return map[type] || type || 'Actividad';
+    }
+
+    // Render table page
+    function renderPage() {
+      const start = currentPage * PAGE_SIZE;
+      const slice = reportRows.slice(start, start + PAGE_SIZE);
+      const totalPages = Math.ceil(reportRows.length / PAGE_SIZE);
+
+      if (!reportRows.length) {
+        tbody.innerHTML = `<tr><td colspan="5" class="empty-table">
+          <span class="empty-ico">📭</span>Sin actividad en el período seleccionado
+        </td></tr>`;
+        paginationEl.style.display = 'none';
+        return;
+      }
+
+      tbody.innerHTML = slice.map(row => `
+        <tr>
+          <td class="td-time">${formatDateTime(row.timestamp)}</td>
+          <td class="td-board">${esc(row.boardTitle || '—')}</td>
+          <td class="td-user">${esc(row.userName || 'Sistema')}</td>
+          <td>${typeBadge(row.type)}<small style="color:var(--text-d);font-size:.68rem;display:block;margin-top:2px">${describeType(row.type)}</small></td>
+          <td class="td-target">${esc(row.target || '—')}</td>
+        </tr>
+      `).join('');
+
+      resultCount.textContent = `${reportRows.length} resultado${reportRows.length !== 1 ? 's' : ''}`;
+      pgPrev.disabled = currentPage === 0;
+      pgNext.disabled = currentPage >= totalPages - 1;
+      pgInfo.textContent = `Pág. ${currentPage + 1} / ${totalPages}`;
+      paginationEl.style.display = totalPages > 1 ? 'flex' : 'none';
+    }
+
+    function esc(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // Update stats
+    function updateStats(rows) {
+      let creates = 0, moves = 0, deletes = 0;
+      rows.forEach(r => {
+        const cls = classifyType(r.type);
+        if (cls === 'create') creates++;
+        else if (cls === 'move') moves++;
+        else if (cls === 'delete') deletes++;
+      });
+      statTotal.textContent   = rows.length;
+      statCreate.textContent  = creates;
+      statMove.textContent    = moves;
+      statDelete.textContent  = deletes;
+    }
+
+    // Build report
+    async function generateReport() {
+      loadingEl.classList.add('show');
+      reportRows = [];
+      currentPage = 0;
+
+      try {
+        const uid = window.currentUser.uid;
+        const from = dateFrom.value ? new Date(dateFrom.value + 'T00:00:00') : null;
+        const to   = dateTo.value   ? new Date(dateTo.value   + 'T23:59:59') : null;
+        const boardId = boardFilter.value;
+        const boardsToQuery = boardId
+          ? allBoards.filter(b => b.id === boardId)
+          : allBoards;
+
+        const promises = boardsToQuery.map(async board => {
+          let query = window.db
+            .collection('users').doc(uid)
+            .collection('boards').doc(board.id)
+            .collection('activity')
+            .orderBy('timestamp', 'desc');
+          if (from) query = query.where('timestamp', '>=', firebase.firestore.Timestamp.fromDate(from));
+          if (to)   query = query.where('timestamp', '<=', firebase.firestore.Timestamp.fromDate(to));
+          query = query.limit(1000);
+
+          const snap = await query.get();
+          return snap.docs.map(d => ({
+            boardId: board.id,
+            boardTitle: board.title,
+            ...d.data()
+          }));
+        });
+
+        const results = await Promise.all(promises);
+        reportRows = results.flat();
+
+        // Sort all rows by timestamp desc
+        reportRows.sort((a, b) => {
+          const ta = a.timestamp?.toDate?.() || new Date(a.timestamp);
+          const tb = b.timestamp?.toDate?.() || new Date(b.timestamp);
+          return tb - ta;
+        });
+
+        updateStats(reportRows);
+        renderPage();
+      } catch(err) {
+        console.error('Error generando informe:', err);
+        tbody.innerHTML = `<tr><td colspan="5" class="empty-table">
+          <span class="empty-ico">⚠️</span>Error al cargar datos. Intenta de nuevo.
+        </td></tr>`;
+      } finally {
+        loadingEl.classList.remove('show');
+      }
+    }
+
+    // CSV export
+    function exportCSV() {
+      if (!reportRows.length) { alert('Genera un informe primero.'); return; }
+      const headers = ['Fecha/Hora', 'Tablero', 'Usuario', 'Tipo', 'Destino'];
+      const rows = reportRows.map(r => [
+        formatDateTime(r.timestamp),
+        r.boardTitle || '',
+        r.userName || 'Sistema',
+        describeType(r.type),
+        r.target || '',
+      ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
+
+      const csv = [headers.join(','), ...rows].join('\n');
+      const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `taskflow-informe-${dateFrom.value || 'inicio'}_${dateTo.value || 'fin'}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Pagination
+    pgPrev.addEventListener('click', () => { if (currentPage > 0) { currentPage--; renderPage(); }});
+    pgNext.addEventListener('click', () => {
+      if (currentPage < Math.ceil(reportRows.length / PAGE_SIZE) - 1) { currentPage++; renderPage(); }
+    });
+
+    document.getElementById('btn-apply').addEventListener('click', generateReport);
+    document.getElementById('btn-csv').addEventListener('click', exportCSV);
+    document.getElementById('btn-print').addEventListener('click', () => window.print());
+
+    // Init after auth
+    window.onUserReady = function() {
+      setDefaultDates();
+      const uid = window.currentUser.uid;
+
+      window.db.collection('users').doc(uid).collection('boards')
+        .orderBy('title').get().then(snap => {
+          allBoards = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          allBoards.forEach(b => {
+            const opt = document.createElement('option');
+            opt.value = b.id;
+            opt.textContent = b.title;
+            boardFilter.appendChild(opt);
+          });
+        }).catch(err => console.error('Error cargando tableros:', err));
+    };
+  })();
+  </script>
+</body>
+</html>

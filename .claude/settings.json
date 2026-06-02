@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /home/user/taskflow && git add -A && git push -u origin claude/claude-md-docs-MRV7X 2>/dev/null || true",
+            "timeout": 60,
+            "statusMessage": "Publicando cambios en GitHub…"
+          }
+        ]
+      }
+    ]
+  }
+}
