@@ -1,11 +1,10 @@
-/* TaskFlow Service Worker — v3 */
-const CACHE = 'taskflow-v3';
+/* TaskFlow Service Worker — v2 */
+const CACHE = 'taskflow-v2';
 const PRECACHE = [
   '/index.html',
   '/board.html',
   '/calendar.html',
   '/reports.html',
-  '/admin.html',
   '/css/style.css',
   '/js/firebase-config.js',
   '/js/board.js',
@@ -13,7 +12,6 @@ const PRECACHE = [
   '/js/notifications.js',
   '/js/auth.js',
   '/js/boards.js',
-  '/js/workspace.js',
   '/logo.svg',
   '/manifest.json',
 ];
@@ -38,15 +36,12 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const url = e.request.url;
+  // Skip Firebase, Google APIs and non-GET requests
   if (e.request.method !== 'GET') return;
-  // Safari bug: "Response served by service worker has redirections"
-  // — never intercept navigation requests; let the browser handle HTML loads natively
-  if (e.request.mode === 'navigate') return;
   if (url.includes('firestore.googleapis') || url.includes('identitytoolkit') ||
       url.includes('securetoken') || url.includes('gstatic.com/firebasejs')) return;
   if (!url.startsWith(self.location.origin)) return;
 
-  // Cache-first for all static assets (JS, CSS, images, fonts)
   e.respondWith(
     caches.match(e.request).then(cached => {
       const fetchPromise = fetch(e.request).then(response => {
@@ -55,7 +50,7 @@ self.addEventListener('fetch', e => {
           caches.open(CACHE).then(c => c.put(e.request, clone));
         }
         return response;
-      }).catch(() => cached);
+      }).catch(() => cached); // offline fallback
       return cached || fetchPromise;
     })
   );
