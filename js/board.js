@@ -9,7 +9,7 @@ const BoardModule = (() => {
 
   function init() {
     const params = new URLSearchParams(location.search);
-    boardId = params.get("id");
+    boardId = params.get("id") || localStorage.getItem("selectedBoardId");
 
     if (!boardId || !window.currentUser) {
       location.href = "index.html";
@@ -22,50 +22,72 @@ const BoardModule = (() => {
       .collection("boards")
       .doc(boardId);
 
-    // Cargar tablero en tiempo real
+    // cardListeners[listId] = unsubscribe fn — prevents duplicate listeners
+    const cardListeners = {};
+    let moduleInitialized = false;
+
+    // Board metadata (title, background) — separate from lists
     boardRef.onSnapshot((doc) => {
       if (!doc.exists) {
         location.href = "index.html";
         return;
       }
-
       const board = doc.data();
       document.querySelector(".board-title").textContent = board.title;
       document.body.style.backgroundColor = board.background;
 
-      // Cargar listas
-      boardRef
-        .collection("lists")
-        .orderBy("position")
-        .onSnapshot((snap) => {
-          boardData.lists = {};
-          snap.forEach((listDoc) => {
-            boardData.lists[listDoc.id] = {
-              ...listDoc.data(),
-              id: listDoc.id,
-              cards: [],
-            };
+      // Fire once: initialize memberships, notifications, activity feed
+      if (!moduleInitialized) {
+        moduleInitialized = true;
+        if (window.onBoardLoaded) window.onBoardLoaded(board, boardId);
+        if (window.onBoardActivityReady) window.onBoardActivityReady(boardId);
+      }
+    });
 
-            // Cargar tarjetas de cada lista
-            boardRef
+    // Lists listener — set up ONCE, outside of board's onSnapshot
+    boardRef
+      .collection("lists")
+      .orderBy("position")
+      .onSnapshot((snap) => {
+        // Unsubscribe card listeners for deleted lists
+        const activeIds = new Set(snap.docs.map((d) => d.id));
+        for (const [listId, unsub] of Object.entries(cardListeners)) {
+          if (!activeIds.has(listId)) {
+            unsub();
+            delete cardListeners[listId];
+          }
+        }
+
+        // Rebuild list data preserving existing card arrays
+        const updatedLists = {};
+        snap.forEach((listDoc) => {
+          updatedLists[listDoc.id] = {
+            ...listDoc.data(),
+            id: listDoc.id,
+            cards: boardData.lists[listDoc.id]?.cards || [],
+          };
+
+          // Create card listener only once per list
+          if (!cardListeners[listDoc.id]) {
+            cardListeners[listDoc.id] = boardRef
               .collection("lists")
               .doc(listDoc.id)
               .collection("cards")
               .orderBy("position")
               .onSnapshot((cardSnap) => {
-                boardData.lists[listDoc.id].cards = [];
-                cardSnap.forEach((cardDoc) => {
-                  boardData.lists[listDoc.id].cards.push({
-                    ...cardDoc.data(),
-                    id: cardDoc.id,
-                  });
-                });
+                if (!boardData.lists[listDoc.id]) return;
+                boardData.lists[listDoc.id].cards = cardSnap.docs.map((cardDoc) => ({
+                  ...cardDoc.data(),
+                  id: cardDoc.id,
+                }));
                 render();
               });
-          });
-          render();
+          }
         });
-    });
+
+        boardData.lists = updatedLists;
+        render();
+      });
   }
 
   function render() {

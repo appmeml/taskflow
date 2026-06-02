@@ -17,7 +17,7 @@
 //   - read: boolean
 //   - createdAt: timestamp
 
-const MembershipsModule = (() => {
+const MembershipsModule = window.MembershipsModule = (() => {
   const membersList = document.getElementById("members-list");
   const inviteBtn = document.getElementById("invite-member-btn");
   const notificationBell = document.getElementById("notification-bell");

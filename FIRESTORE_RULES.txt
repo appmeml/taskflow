@@ -50,10 +50,10 @@ service cloud.firestore {
             && isOwner(userId, boardId);
         }
 
-        // Activity log (solo lectura, writes via Cloud Functions)
+        // Activity log: board owner writes; Cloud Functions also write
         match /activity/{activityId} {
           allow read: if request.auth.uid == userId;
-          allow write: if false; // Solo Cloud Functions
+          allow write: if request.auth.uid == userId;
         }
       }
     }
@@ -67,7 +67,9 @@ service cloud.firestore {
         allow update: if request.auth.uid == userId
           && validateNotification(request.resource.data);
         allow delete: if request.auth.uid == userId;
-        allow create: if false; // Solo Cloud Functions
+        // Any authenticated user can create notifications (e.g. board invites)
+        // Cloud Functions also write here when deployed
+        allow create: if request.auth != null;
       }
     }
 

@@ -62,11 +62,15 @@ There is no `import`/`export`. Every JS file runs in the global scope. Modules u
 - `window.onBoardActivityReady(bId)` — callback registered by `NotificationsModule`; intended to be called after board data loads
 - `window.onUserReady()` — callback registered by `BoardModule`; intended to be called by the auth listener once the user is confirmed
 
-**Known issue**: `firebase-config.js` never calls `window.onUserReady()`, and no caller triggers `window.onBoardLoaded` or `window.onBoardActivityReady`. The board page relies on Firebase's `onSnapshot` real-time listeners being set up during module initialization (before auth is confirmed), which works in practice because Firebase SDK queues calls and fires them once authenticated.
+**Initialization chain on `board.html`**: `firebase-config.js` calls `window.onUserReady()` once auth resolves → `BoardModule.init()` runs → after the first board `onSnapshot`, calls `window.onBoardLoaded(board, boardId)` (starts `MembershipsModule` listeners) and `window.onBoardActivityReady(boardId)` (starts `NotificationsModule` activity feed). These callbacks fire exactly once via the `moduleInitialized` flag.
 
 ### Script load order matters
 
 Scripts within each HTML page must stay in their declared order — later scripts depend on globals set by earlier ones (e.g., `board.js` uses `window.logActivity` defined by `notifications.js`).
+
+### Firebase SDK: always use the compat CDN
+
+Both HTML files load Firebase via CDN using the **compat** (not modular) SDK — filenames must end in `-compat.js` (e.g. `firebase-app-compat.js`). The non-compat files (`firebase-app.js`) do not expose `window.firebase`, which breaks all Firebase calls silently.
 
 ### Card and list positioning
 
@@ -94,9 +98,9 @@ Two separate top-level collections exist: `users/` (owns all board data) and `no
 `FIRESTORE_RULES.txt` contains the production Firestore rules to be pasted into the Firebase Console. Key constraints to be aware of when writing client code:
 
 - `users/{userId}/boards/{boardId}/activity/{activityId}` — **`allow write: if false`**. Only Cloud Functions can write activity. Client-side calls to this path will be rejected in production.
-- `notifications/{userId}/messages/{notificationId}` — **`allow create: if false`**. Only Cloud Functions can create notifications. The `memberships.js` client code calls `sendNotification()` which writes to this path — this works only when running against a development environment without rules enforced, or will silently fail in production.
+- `notifications/{userId}/messages/{notificationId}` — `allow create: if request.auth != null`. Any authenticated user can create notifications (needed for client-side invite flow). Cloud Functions also write here when deployed.
 
-To update rules: edit `FIRESTORE_RULES.txt`, then paste into Firebase Console → Firestore → Rules → Publish.
+Activity writes (`users/{userId}/boards/{boardId}/activity`) are allowed by the board owner (client) and by Cloud Functions. To update rules: edit `FIRESTORE_RULES.txt`, then paste into Firebase Console → Firestore → Rules → Publish.
 
 ## Cloud Functions
 

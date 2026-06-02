@@ -95,7 +95,7 @@
       font-weight: 600;
     }
     #app-container {
-      display: none;
+      /* visibility controlled exclusively via .hidden class */
     }
     .navbar {
       background: white;
@@ -279,9 +279,9 @@
     </div>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
   <script>
     const firebaseConfig = {
@@ -444,7 +444,7 @@
     window.openBoard = (id) => {
       localStorage.setItem('selectedBoardId', id);
       localStorage.setItem('selectedUserId', currentUser.uid);
-      window.location.href = 'board.html';
+      window.location.href = `board.html?id=${id}`;
     };
 
     window.deleteBoard = async (id) => {
