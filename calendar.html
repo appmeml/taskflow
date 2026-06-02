@@ -14,19 +14,22 @@
       --bg:#0A0A0A; --s1:#111111; --s2:#1A1A1A; --s3:#222222; --s4:#2A2A2A;
       --border:rgba(201,168,76,.18); --border-s:rgba(201,168,76,.08);
       --text:#F0EDE6; --text-m:rgba(240,237,230,.65); --text-d:rgba(240,237,230,.35);
-      --radius:14px; --nav-h:64px;
+      --radius:14px; --nav-h:76px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
     *{box-sizing:border-box;margin:0;padding:0}
     body{
       background:var(--bg);color:var(--text);
       font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-      min-height:100vh;padding-bottom:calc(var(--nav-h) + 1rem);
+      min-height:100vh;padding-bottom:calc(var(--nav-h) + var(--safe-bottom) + 1rem);
     }
 
     /* ── Header ── */
     .page-header{
       background:var(--s1);border-bottom:1px solid var(--border);
-      padding:.9rem 1.25rem;display:flex;align-items:center;
+      padding:calc(var(--safe-top) + .9rem) 1.25rem .9rem;
+      display:flex;align-items:center;
       justify-content:space-between;position:sticky;top:0;z-index:50;
     }
     .page-header h1{
@@ -160,18 +163,20 @@
 
     /* ── Bottom nav ── */
     .bottom-nav{
-      position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);
-      background:var(--s1);border-top:1px solid var(--border);
-      display:flex;align-items:stretch;z-index:100;
+      position:fixed;bottom:0;left:0;right:0;
+      background:rgba(10,10,10,.97);border-top:1px solid var(--border);
+      display:flex;align-items:flex-start;justify-content:space-around;
+      z-index:100;padding:8px 0 calc(var(--safe-bottom) + 4px);
+      backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
     }
     .nav-item{
-      flex:1;display:flex;flex-direction:column;align-items:center;
-      justify-content:center;gap:3px;text-decoration:none;
-      color:var(--text-d);font-size:.6rem;font-weight:700;letter-spacing:.04em;
+      flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;
+      gap:4px;text-decoration:none;color:var(--text-d);
+      font-size:.55rem;font-weight:700;letter-spacing:.2em;
       text-transform:uppercase;transition:color .15s;border:none;
-      background:none;cursor:pointer;padding:0;
+      background:none;cursor:pointer;padding:0 2px;
     }
-    .nav-icon{font-size:1.25rem;line-height:1;}
+    .nav-icon{font-size:1.4rem;line-height:1;}
     .nav-item.active{color:var(--gold);}
     .nav-item:hover:not(.active){color:var(--text-m);}
 
