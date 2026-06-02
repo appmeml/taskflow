@@ -530,6 +530,13 @@
           <span class="account-row-chevron">›</span>
         </div>
       </div>
+      <div class="account-card" id="admin-panel-card" style="display:none">
+        <div class="account-row" id="admin-row">
+          <span class="account-row-icon">🛡️</span>
+          <span class="account-row-label">Panel de administración</span>
+          <span class="account-row-chevron">›</span>
+        </div>
+      </div>
       <div class="account-card">
         <div class="account-row danger" id="logout-row">
           <span class="account-row-icon">🚪</span>
@@ -695,11 +702,62 @@ const COLORS=[
 /* ── AUTH ─────────────────────────────────── */
 const ERR={'auth/user-not-found':'Usuario no encontrado','auth/wrong-password':'Contraseña incorrecta','auth/email-already-in-use':'Correo ya registrado','auth/weak-password':'Contraseña muy corta (mín. 6)','auth/invalid-email':'Correo inválido','auth/invalid-credential':'Credenciales inválidas'};
 
-auth.onAuthStateChanged(user=>{
+async function initWorkspaceIndex(user) {
+  try {
+    const memberRef = db.collection('workspaceMembers').doc(user.uid);
+    const configRef = db.collection('workspaceConfig').doc('settings');
+    const memberDoc = await memberRef.get();
+    if (!memberDoc.exists) {
+      const configDoc = await configRef.get();
+      const isFirst = !configDoc.exists;
+      await memberRef.set({
+        uid: user.uid,
+        email: user.email || '',
+        displayName: user.displayName || (user.email || '').split('@')[0] || 'Usuario',
+        role: isFirst ? 'admin' : 'member',
+        joinedAt: new Date(),
+        photoURL: user.photoURL || null
+      });
+      if (isFirst) {
+        await configRef.set({
+          membershipRestriction: 'open',
+          boardCreation: { public: 'any', workspace: 'any', private: 'any' },
+          boardDeletion: { public: 'any', workspace: 'any', private: 'any' },
+          guestInvitations: 'any',
+          createdAt: new Date(),
+          createdBy: user.uid
+        });
+      }
+    }
+    const [cfgDoc, memDoc] = await Promise.all([configRef.get(), memberRef.get()]);
+    window.workspaceConfig = cfgDoc.exists ? cfgDoc.data() : {
+      membershipRestriction: 'open',
+      boardCreation: { public: 'any', workspace: 'any', private: 'any' },
+      boardDeletion: { public: 'any', workspace: 'any', private: 'any' },
+      guestInvitations: 'any'
+    };
+    window.isAdmin = memDoc.exists && memDoc.data().role === 'admin';
+  } catch(e) {
+    console.warn('Workspace init error:', e);
+    window.workspaceConfig = {
+      membershipRestriction: 'open',
+      boardCreation: { public: 'any', workspace: 'any', private: 'any' },
+      boardDeletion: { public: 'any', workspace: 'any', private: 'any' },
+      guestInvitations: 'any'
+    };
+    window.isAdmin = false;
+  }
+}
+
+auth.onAuthStateChanged(async user=>{
   currentUser=user;
   if(user){
     document.getElementById('auth-container').style.display='none';
     document.getElementById('app-container').classList.remove('hidden');
+    await initWorkspaceIndex(user);
+    // Show/hide admin panel card
+    const adminCard=document.getElementById('admin-panel-card');
+    if(adminCard) adminCard.style.display=window.isAdmin?'block':'none';
     populateAccount(user);
     loadBoards();
     loadNotifications();
@@ -793,6 +851,10 @@ function renderBoards(list){
 }
 
 async function deleteBoard(id,title){
+  if(window.WorkspaceModule && !window.WorkspaceModule.canDo('deleteBoard')){
+    showToast('Solo los administradores pueden eliminar tableros en este espacio de trabajo.','error');
+    return;
+  }
   if(!confirm(`¿Eliminar "${title}"?`))return;
   try{await db.collection('users').doc(currentUser.uid).collection('boards').doc(id).delete();showToast('Tablero eliminado');loadBoards()}
   catch(err){showToast(err.message,'error')}
@@ -837,6 +899,10 @@ document.getElementById('open-create').addEventListener('click',()=>{
 document.getElementById('close-create').addEventListener('click',()=>document.getElementById('create-modal').classList.add('hidden'));
 document.getElementById('create-modal').addEventListener('click',e=>{if(e.target.id==='create-modal')document.getElementById('create-modal').classList.add('hidden')});
 document.getElementById('confirm-create').addEventListener('click',async()=>{
+  if(window.WorkspaceModule && !window.WorkspaceModule.canDo('createBoard')){
+    showToast('Solo los administradores pueden crear tableros en este espacio de trabajo.','error');
+    return;
+  }
   const name=document.getElementById('new-board-name').value.trim();
   if(!name){showToast('Escribe un nombre','error');return}
   const btn=document.getElementById('confirm-create');btn.disabled=true;btn.textContent='Creando…';
@@ -1020,6 +1086,7 @@ document.getElementById('delete-row').addEventListener('click',async()=>{
   catch(e){showToast(e.message,'error')}
 });
 document.getElementById('export-row').addEventListener('click',exportData);
+document.getElementById('admin-row').addEventListener('click',()=>{ location.href='admin.html'; });
 async function exportData(){
   if(!currentUser)return;showToast('Exportando…','info');
   try{
@@ -1051,5 +1118,6 @@ document.querySelectorAll('.nav-item[data-tab]').forEach(btn=>{
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function fmtTime(d){if(!d)return'';const diff=Date.now()-d,m=Math.floor(diff/60000),h=Math.floor(diff/3600000),dy=Math.floor(diff/86400000);if(m<1)return'Ahora';if(m<60)return`${m}m`;if(h<24)return`${h}h`;if(dy<7)return`${dy}d`;return d.toLocaleDateString('es-ES')}
 </script>
+<script src="js/workspace.js"></script>
 </body>
 </html>

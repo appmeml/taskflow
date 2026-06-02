@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
+  <title>Administración — TaskFlow</title>
+  <meta name="theme-color" content="#C9A84C"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <link rel="manifest" href="manifest.json"/>
+  <style>
+    :root {
+      --gold:#C9A84C; --gold-l:#E8C97A; --gold-d:#9A7020; --gold-dim:rgba(201,168,76,.15);
+      --bg:#0A0A0A; --s1:#111111; --s2:#1A1A1A; --s3:#242424; --s4:#2E2E2E;
+      --text:#F0EBE0; --t2:#A89880; --t3:#6A5A48;
+      --border:rgba(201,168,76,.18); --shadow:0 8px 32px rgba(0,0,0,.6);
+      --radius:14px;
+      --nav-h:76px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html{height:100%;height:-webkit-fill-available}
+    body{
+      min-height:100vh;min-height:-webkit-fill-available;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+      background:var(--bg);color:var(--text);
+      padding-bottom:calc(var(--nav-h) + var(--safe-bottom) + 8px);
+    }
+    a{color:inherit;text-decoration:none}
+    input,button,select,textarea{font-family:inherit}
+
+    /* ── TOAST ─────────────────────────────── */
+    .toast{
+      position:fixed;bottom:calc(var(--nav-h) + var(--safe-bottom) + 16px);left:50%;
+      transform:translateX(-50%) translateY(20px);
+      padding:12px 22px;border-radius:24px;font-size:14px;font-weight:700;
+      box-shadow:var(--shadow);z-index:9999;white-space:nowrap;
+      opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;
+      border:1px solid var(--border);
+    }
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    .toast-success{background:linear-gradient(135deg,#1B4A22,#0D2E14);color:#6EE280}
+    .toast-error  {background:linear-gradient(135deg,#4A1B1B,#2E0D0D);color:#FF8080}
+    .toast-info   {background:linear-gradient(135deg,#1B2E4A,#0D1A2E);color:#80B8FF}
+
+    /* ── HEADER ────────────────────────────── */
+    .page-header{
+      background:var(--s1);border-bottom:1px solid var(--border);
+      padding:calc(var(--safe-top) + 12px) 18px 12px;
+      display:flex;align-items:center;gap:12px;
+      position:sticky;top:0;z-index:50;
+    }
+    .back-btn{
+      width:36px;height:36px;border-radius:10px;border:none;
+      background:var(--s3);color:var(--t2);font-size:18px;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+      transition:background .2s,color .2s;flex-shrink:0;
+      text-decoration:none;
+    }
+    .back-btn:hover{background:var(--s4);color:var(--gold)}
+    .header-titles{flex:1;min-width:0}
+    .header-title{
+      font-size:20px;font-weight:900;letter-spacing:.3px;
+      background:linear-gradient(135deg,var(--gold-l),var(--gold));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+      line-height:1.2;
+    }
+    .header-subtitle{font-size:12px;color:var(--t2);margin-top:2px}
+
+    /* ── TABS ───────────────────────────────── */
+    .tabs-bar{
+      display:flex;background:var(--s1);border-bottom:1px solid var(--border);
+      padding:0 18px;gap:0;
+    }
+    .tab-btn{
+      padding:14px 20px 12px;font-size:14px;font-weight:700;
+      border:none;background:none;color:var(--t2);cursor:pointer;
+      border-bottom:2px solid transparent;transition:color .2s,border-color .2s;
+      letter-spacing:.3px;
+    }
+    .tab-btn.active{color:var(--gold);border-bottom-color:var(--gold)}
+    .tab-btn:hover:not(.active){color:var(--text)}
+
+    .tab-pane{display:none;padding:20px 18px}
+    .tab-pane.active{display:block}
+
+    /* ── RESTRICTION CARDS ─────────────────── */
+    .restriction-card{
+      background:var(--s2);border:1px solid var(--border);border-radius:var(--radius);
+      padding:20px;margin-bottom:16px;
+    }
+    .restriction-title{font-size:15px;font-weight:800;color:var(--text);margin-bottom:6px}
+    .restriction-desc{font-size:13px;color:var(--t2);line-height:1.45;margin-bottom:16px}
+    .restriction-select{
+      width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;
+      font-size:14px;background:var(--s3);color:var(--text);outline:none;cursor:pointer;
+      transition:border-color .2s;appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23A89880' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;background-position:right 12px center;padding-right:36px;
+    }
+    .restriction-select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-dim)}
+
+    .restriction-rows{display:flex;flex-direction:column;gap:12px}
+    .restriction-row{
+      display:flex;align-items:center;gap:12px;
+      padding:12px 14px;background:var(--s3);border-radius:10px;
+      border:1px solid rgba(201,168,76,.08);
+    }
+    .restriction-row-label{flex:1;font-size:14px;color:var(--text);font-weight:600}
+    .restriction-row-select{
+      padding:8px 32px 8px 12px;border:1.5px solid var(--border);border-radius:8px;
+      font-size:13px;background:var(--s4);color:var(--text);outline:none;cursor:pointer;
+      transition:border-color .2s;appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23A89880' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;background-position:right 10px center;
+      min-width:120px;flex-shrink:0;
+    }
+    .restriction-row-select:focus{border-color:var(--gold)}
+
+    /* ── USERS TAB ─────────────────────────── */
+    .users-header{
+      display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;
+    }
+    .users-title{font-size:16px;font-weight:800;color:var(--text)}
+    .refresh-btn{
+      background:var(--s3);border:1px solid var(--border);color:var(--t2);
+      padding:8px 16px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;
+      transition:background .2s,color .2s;
+    }
+    .refresh-btn:hover{background:var(--s4);color:var(--gold)}
+
+    .spinner{
+      display:flex;align-items:center;justify-content:center;padding:40px 0;
+      color:var(--t2);font-size:14px;gap:10px;
+    }
+    .spin-ring{
+      width:20px;height:20px;border-radius:50%;
+      border:2px solid var(--border);border-top-color:var(--gold);
+      animation:spin .7s linear infinite;flex-shrink:0;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .member-row{
+      background:var(--s2);border:1px solid var(--border);border-radius:var(--radius);
+      padding:14px 16px;margin-bottom:10px;
+      display:flex;align-items:center;gap:14px;
+    }
+    .member-avatar{
+      width:42px;height:42px;border-radius:50%;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;
+      font-size:17px;font-weight:800;color:#0A0A0A;
+      background:linear-gradient(135deg,var(--gold-l),var(--gold));
+    }
+    .member-info{flex:1;min-width:0}
+    .member-name{font-size:14px;font-weight:700;color:var(--text);
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .member-email{font-size:12px;color:var(--t2);margin-top:2px;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .member-badge{
+      padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;
+      flex-shrink:0;letter-spacing:.3px;
+    }
+    .member-badge.admin{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(201,168,76,.3)}
+    .member-badge.member{background:var(--s3);color:var(--t2);border:1px solid var(--border)}
+    .member-actions{display:flex;gap:8px;flex-shrink:0}
+    .member-btn{
+      padding:7px 12px;border:1px solid var(--border);border-radius:8px;
+      font-size:12px;font-weight:700;cursor:pointer;background:var(--s3);color:var(--t2);
+      transition:background .2s,color .2s,border-color .2s;white-space:nowrap;
+    }
+    .member-btn:hover{background:var(--s4);color:var(--text)}
+    .member-btn.promote{border-color:rgba(201,168,76,.3);color:var(--gold)}
+    .member-btn.promote:hover{background:var(--gold-dim)}
+    .member-btn.remove{border-color:rgba(255,80,80,.2);color:#FF8080}
+    .member-btn.remove:hover{background:rgba(255,80,80,.1)}
+
+    /* ── BOTTOM NAV ─────────────────────────── */
+    .bottom-nav{
+      position:fixed;bottom:0;left:0;right:0;
+      background:rgba(10,10,10,.97);border-top:1px solid var(--border);
+      display:flex;align-items:flex-start;justify-content:space-around;
+      z-index:200;
+      padding:8px 0 calc(var(--safe-bottom) + 4px);
+      box-shadow:0 -4px 24px rgba(0,0,0,.6);
+      backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    }
+    .nav-item{
+      flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;
+      gap:4px;border:none;background:none;cursor:pointer;padding:0 2px;
+      color:var(--t3);transition:color .2s;
+    }
+    .nav-item:hover{color:var(--t2)}
+    .nav-bubble{
+      width:50px;height:50px;border-radius:15px;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;
+      transition:transform .18s,background .2s;
+    }
+    .nav-bubble-boards{background:rgba(26,58,107,.55)}
+    .nav-bubble-cal   {background:rgba(20,74,46,.55)}
+    .nav-bubble-rep   {background:rgba(90,54,10,.55)}
+    .nav-bubble-notif {background:rgba(100,22,22,.55)}
+    .nav-bubble-acc   {background:rgba(50,22,80,.55)}
+    .nav-item:active .nav-bubble{transform:scale(.9)}
+    .nav-item-icon{font-size:24px;line-height:1}
+    .nav-item-label{
+      font-size:9px;font-weight:700;letter-spacing:.2px;text-transform:uppercase;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+      max-width:64px;text-align:center;
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="page-header">
+  <a href="index.html" class="back-btn" title="Volver">&#8592;</a>
+  <div class="header-titles">
+    <div class="header-title">Administración</div>
+    <div class="header-subtitle">Espacio de trabajo</div>
+  </div>
+</header>
+
+<!-- TABS BAR -->
+<div class="tabs-bar">
+  <button class="tab-btn active" data-tab="tab-restrictions">Restricciones</button>
+  <button class="tab-btn" data-tab="tab-users">Usuarios</button>
+</div>
+
+<!-- TAB: RESTRICCIONES -->
+<div class="tab-pane active" id="tab-restrictions">
+
+  <!-- 1. Membresía -->
+  <div class="restriction-card">
+    <div class="restriction-title">Restricciones de membresía del Espacio de trabajo</div>
+    <div class="restriction-desc">Controla quién puede añadir nuevos miembros al espacio de trabajo</div>
+    <select class="restriction-select" id="sel-membership">
+      <option value="open">Cualquier miembro puede añadir personas</option>
+      <option value="admin">Solo administradores pueden añadir personas</option>
+    </select>
+  </div>
+
+  <!-- 2. Creación de tableros -->
+  <div class="restriction-card">
+    <div class="restriction-title">Restricciones en la creación de tableros</div>
+    <div class="restriction-desc">Controla quién puede crear nuevos tableros</div>
+    <div class="restriction-rows">
+      <div class="restriction-row">
+        <span class="restriction-row-label">Tableros públicos</span>
+        <select class="restriction-row-select" id="sel-create-public">
+          <option value="any">Cualquier miembro</option>
+          <option value="admin">Solo admins</option>
+        </select>
+      </div>
+      <div class="restriction-row">
+        <span class="restriction-row-label">Tableros del espacio de trabajo</span>
+        <select class="restriction-row-select" id="sel-create-workspace">
+          <option value="any">Cualquier miembro</option>
+          <option value="admin">Solo admins</option>
+        </select>
+      </div>
+      <div class="restriction-row">
+        <span class="restriction-row-label">Tableros privados</span>
+        <select class="restriction-row-select" id="sel-create-private">
+          <option value="any">Cualquier miembro</option>
+          <option value="admin">Solo admins</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Eliminación de tableros -->
+  <div class="restriction-card">
+    <div class="restriction-title">Restricciones en la eliminación de tableros</div>
+    <div class="restriction-desc">Controla quién puede eliminar tableros</div>
+    <div class="restriction-rows">
+      <div class="restriction-row">
+        <span class="restriction-row-label">Tableros públicos</span>
+        <select class="restriction-row-select" id="sel-delete-public">
+          <option value="any">Cualquier miembro</option>
+          <option value="admin">Solo admins</option>
+        </select>
+      </div>
+      <div class="restriction-row">
+        <span class="restriction-row-label">Tableros del espacio de trabajo</span>
+        <select class="restriction-row-select" id="sel-delete-workspace">
+          <option value="any">Cualquier miembro</option>
+          <option value="admin">Solo admins</option>
+        </select>
+      </div>
+      <div class="restriction-row">
+        <span class="restriction-row-label">Tableros privados</span>
+        <select class="restriction-row-select" id="sel-delete-private">
+          <option value="any">Cualquier miembro</option>
+          <option value="admin">Solo admins</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Invitaciones a tableros -->
+  <div class="restriction-card">
+    <div class="restriction-title">Compartir tableros con invitados</div>
+    <div class="restriction-desc">Controla quién puede enviar invitaciones a tableros</div>
+    <select class="restriction-select" id="sel-invitations">
+      <option value="anyone">Cualquier persona puede enviar o recibir invitaciones</option>
+      <option value="members">Solo miembros del espacio de trabajo</option>
+      <option value="admin">Solo administradores</option>
+    </select>
+  </div>
+
+</div>
+
+<!-- TAB: USUARIOS -->
+<div class="tab-pane" id="tab-users">
+  <div class="users-header">
+    <span class="users-title">Miembros del espacio de trabajo</span>
+    <button class="refresh-btn" id="btn-refresh">Actualizar</button>
+  </div>
+  <div id="users-list">
+    <div class="spinner"><div class="spin-ring"></div> Cargando miembros…</div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-item" onclick="location.href='index.html'">
+    <div class="nav-bubble nav-bubble-boards"><span class="nav-item-icon">🗂️</span></div>
+    <span class="nav-item-label">Tableros</span>
+  </button>
+  <button class="nav-item" onclick="location.href='calendar.html'">
+    <div class="nav-bubble nav-bubble-cal"><span class="nav-item-icon">📅</span></div>
+    <span class="nav-item-label">Calendario</span>
+  </button>
+  <button class="nav-item" onclick="location.href='reports.html'">
+    <div class="nav-bubble nav-bubble-rep"><span class="nav-item-icon">📊</span></div>
+    <span class="nav-item-label">Informes</span>
+  </button>
+  <button class="nav-item" onclick="location.href='index.html#notifications'">
+    <div class="nav-bubble nav-bubble-notif"><span class="nav-item-icon">🔔</span></div>
+    <span class="nav-item-label">Actividad</span>
+  </button>
+  <button class="nav-item" onclick="location.href='index.html#account'">
+    <div class="nav-bubble nav-bubble-acc"><span class="nav-item-icon">👤</span></div>
+    <span class="nav-item-label">Cuenta</span>
+  </button>
+</nav>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  // ── TABS ──────────────────────────────────────────────────────────
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tabId = btn.dataset.tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+      if (tabId === 'tab-users') loadUsers();
+    });
+  });
+
+  // ── RESTRICTION SELECTS — LOAD ─────────────────────────────────────
+  function populateRestrictions(cfg) {
+    if (!cfg) return;
+    const sel = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && val !== undefined) el.value = val;
+    };
+    sel('sel-membership', cfg.membershipRestriction || 'open');
+    const bc = cfg.boardCreation || {};
+    sel('sel-create-public',    bc.public    || 'any');
+    sel('sel-create-workspace', bc.workspace || 'any');
+    sel('sel-create-private',   bc.private   || 'any');
+    const bd = cfg.boardDeletion || {};
+    sel('sel-delete-public',    bd.public    || 'any');
+    sel('sel-delete-workspace', bd.workspace || 'any');
+    sel('sel-delete-private',   bd.private   || 'any');
+    sel('sel-invitations', cfg.guestInvitations || 'anyone');
+  }
+
+  // ── RESTRICTION SELECTS — AUTO SAVE ───────────────────────────────
+  async function saveRestriction(partial) {
+    try {
+      await window.db.collection('workspaceConfig').doc('settings').set(partial, { merge: true });
+      window.showToast('Restricción actualizada', 'success');
+      // Keep local cache in sync
+      if (window.workspaceConfig) {
+        Object.assign(window.workspaceConfig, partial);
+      }
+    } catch(e) {
+      window.showToast('Error al guardar: ' + e.message, 'error');
+    }
+  }
+
+  document.getElementById('sel-membership').addEventListener('change', function() {
+    saveRestriction({ membershipRestriction: this.value });
+  });
+
+  ['public', 'workspace', 'private'].forEach(type => {
+    document.getElementById('sel-create-' + type).addEventListener('change', async function() {
+      const cfgDoc = await window.db.collection('workspaceConfig').doc('settings').get();
+      const existing = cfgDoc.exists ? (cfgDoc.data().boardCreation || {}) : {};
+      existing[type] = this.value;
+      saveRestriction({ boardCreation: existing });
+    });
+    document.getElementById('sel-delete-' + type).addEventListener('change', async function() {
+      const cfgDoc = await window.db.collection('workspaceConfig').doc('settings').get();
+      const existing = cfgDoc.exists ? (cfgDoc.data().boardDeletion || {}) : {};
+      existing[type] = this.value;
+      saveRestriction({ boardDeletion: existing });
+    });
+  });
+
+  document.getElementById('sel-invitations').addEventListener('change', function() {
+    saveRestriction({ guestInvitations: this.value });
+  });
+
+  // ── USERS TAB ──────────────────────────────────────────────────────
+  async function loadUsers() {
+    const list = document.getElementById('users-list');
+    list.innerHTML = '<div class="spinner"><div class="spin-ring"></div> Cargando miembros…</div>';
+    try {
+      const snap = await window.db.collection('workspaceMembers').get();
+      if (snap.empty) {
+        list.innerHTML = '<p style="text-align:center;color:var(--t2);padding:40px 0">No hay miembros registrados aún.</p>';
+        return;
+      }
+      list.innerHTML = '';
+      snap.forEach(doc => {
+        const m = doc.data();
+        const isSelf = window.currentUser && window.currentUser.uid === doc.id;
+        const isAdminMember = m.role === 'admin';
+        const initial = (m.displayName || m.email || '?')[0].toUpperCase();
+
+        // Avatar color based on uid hash
+        const colors = ['#C9A84C','#4A90D9','#E85D75','#5DBE8A','#E8895D','#9B59B6'];
+        const colorIdx = doc.id.charCodeAt(0) % colors.length;
+        const avatarBg = colors[colorIdx];
+
+        const row = document.createElement('div');
+        row.className = 'member-row';
+        row.innerHTML = `
+          <div class="member-avatar" style="background:${avatarBg}">${escHtml(initial)}</div>
+          <div class="member-info">
+            <div class="member-name">${escHtml(m.displayName || m.email || 'Usuario')}</div>
+            <div class="member-email">${escHtml(m.email || '')}</div>
+          </div>
+          <span class="member-badge ${isAdminMember ? 'admin' : 'member'}">${isAdminMember ? 'Admin' : 'Miembro'}</span>
+          ${!isSelf ? `
+          <div class="member-actions">
+            <button class="member-btn ${isAdminMember ? '' : 'promote'}" data-uid="${doc.id}" data-action="toggle-role">
+              ${isAdminMember ? 'Quitar admin' : 'Hacer admin'}
+            </button>
+            <button class="member-btn remove" data-uid="${doc.id}" data-action="remove">&#10005;</button>
+          </div>` : ''}
+        `;
+
+        row.querySelector('[data-action="toggle-role"]')?.addEventListener('click', () => toggleRole(doc.id, m.role, m.displayName || m.email));
+        row.querySelector('[data-action="remove"]')?.addEventListener('click', () => removeMember(doc.id, m.displayName || m.email));
+
+        list.appendChild(row);
+      });
+    } catch(e) {
+      list.innerHTML = `<p style="text-align:center;color:#FF8080;padding:40px 0">Error cargando miembros: ${escHtml(e.message)}</p>`;
+    }
+  }
+
+  async function toggleRole(uid, currentRole, name) {
+    const newRole = currentRole === 'admin' ? 'member' : 'admin';
+    const action = newRole === 'admin' ? 'dar rol de administrador a' : 'quitar rol de administrador a';
+    if (!confirm(`¿Deseas ${action} "${name}"?`)) return;
+    try {
+      await window.db.collection('workspaceMembers').doc(uid).update({ role: newRole });
+      window.showToast(`Rol actualizado: ${name} ahora es ${newRole === 'admin' ? 'administrador' : 'miembro'}`, 'success');
+      loadUsers();
+    } catch(e) {
+      window.showToast('Error al cambiar rol: ' + e.message, 'error');
+    }
+  }
+
+  async function removeMember(uid, name) {
+    if (!confirm(`¿Eliminar a "${name}" del espacio de trabajo?`)) return;
+    try {
+      await window.db.collection('workspaceMembers').doc(uid).delete();
+      window.showToast(`${name} eliminado del espacio de trabajo`, 'success');
+      loadUsers();
+    } catch(e) {
+      window.showToast('Error al eliminar miembro: ' + e.message, 'error');
+    }
+  }
+
+  document.getElementById('btn-refresh').addEventListener('click', loadUsers);
+
+  // ── HELPERS ────────────────────────────────────────────────────────
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── INIT — called by firebase-config.js once auth resolves ────────
+  window.onUserReady = function() {
+    // Guard: non-admins get redirected
+    if (!window.isAdmin) {
+      location.href = 'index.html';
+      return;
+    }
+    // Populate restrictions from workspaceConfig
+    populateRestrictions(window.workspaceConfig);
+    // Load users for the active tab if it's tab-users
+    if (document.getElementById('tab-users').classList.contains('active')) {
+      loadUsers();
+    }
+  };
+
+})();
+</script>
+</body>
+</html>
