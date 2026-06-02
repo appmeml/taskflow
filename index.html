@@ -659,7 +659,13 @@ const auth=firebase.auth(), db=firebase.firestore();
 
 /* ── PWA ──────────────────────────────────── */
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  // Unregister any stale service workers registered at wrong paths (e.g. /sw.js at root)
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(r => {
+      if(!r.scope.includes(location.pathname.replace(/\/[^/]*$/, '/'))) r.unregister();
+    });
+  });
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
 }
 let deferredPrompt=null;
 window.addEventListener('beforeinstallprompt', e=>{
