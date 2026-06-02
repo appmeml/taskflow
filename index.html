@@ -139,30 +139,36 @@
       text-transform:uppercase;margin:8px 0 12px;padding-left:2px}
 
     /* ── BOARD CARDS ────────────────── */
-    .boards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px}
-    @media(max-width:380px){.boards-grid{grid-template-columns:1fr 1fr}}
+    .boards-grid{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:12px;
+    }
+    @media(min-width:480px){.boards-grid{grid-template-columns:repeat(3,1fr)}}
+    @media(min-width:720px){.boards-grid{grid-template-columns:repeat(4,1fr)}}
     .board-card{
-      border-radius:var(--radius);padding:16px 14px 52px;min-height:100px;
+      border-radius:var(--radius);padding:14px 12px 48px;min-height:110px;
       position:relative;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.5);
       transition:transform .2s,box-shadow .2s;overflow:hidden;border:1px solid rgba(255,255,255,.06);
+      width:100%;
     }
     .board-card::before{content:'';position:absolute;inset:0;background:linear-gradient(145deg,rgba(255,255,255,.08),rgba(0,0,0,.3))}
     .board-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.6)}
     .board-card:active{transform:scale(.97)}
-    .board-card-title{font-size:14px;font-weight:800;color:#fff;word-break:break-word;line-height:1.3;position:relative;text-shadow:0 1px 6px rgba(0,0,0,.5)}
-    .board-card-footer{position:absolute;bottom:10px;left:14px;right:10px;display:flex;align-items:center;justify-content:space-between;gap:6px}
-    .board-card-date{font-size:11px;color:rgba(255,255,255,.65);white-space:nowrap}
-    .board-card-actions{display:flex;gap:4px}
+    .board-card-title{font-size:13px;font-weight:800;color:#fff;word-break:break-word;line-height:1.35;position:relative;text-shadow:0 1px 6px rgba(0,0,0,.5)}
+    .board-card-footer{position:absolute;bottom:8px;left:12px;right:8px;display:flex;align-items:center;justify-content:space-between;gap:4px}
+    .board-card-date{font-size:10px;color:rgba(255,255,255,.65);white-space:nowrap}
+    .board-card-actions{display:flex;gap:3px}
     .card-action-btn{
       background:rgba(0,0,0,.3);color:rgba(255,255,255,.8);border:none;border-radius:6px;
-      width:28px;height:28px;font-size:13px;cursor:pointer;display:flex;align-items:center;
+      width:26px;height:26px;font-size:12px;cursor:pointer;display:flex;align-items:center;
       justify-content:center;opacity:0;transition:opacity .2s,background .2s;flex-shrink:0;
     }
     .board-card:hover .card-action-btn{opacity:1}
     .card-action-btn:hover{background:rgba(0,0,0,.5)}
 
     .create-card{
-      border-radius:var(--radius);border:1.5px dashed var(--border);min-height:100px;
+      border-radius:var(--radius);border:1.5px dashed var(--border);min-height:110px;
       display:flex;flex-direction:column;align-items:center;justify-content:center;
       gap:6px;cursor:pointer;background:var(--s2);transition:border-color .2s,background .2s;
       color:var(--t2);
@@ -207,18 +213,34 @@
     .account-header{
       background:linear-gradient(135deg,#1C1A08,#0D0A04);
       border:1px solid var(--border);border-radius:var(--radius);
-      padding:28px 20px;text-align:center;margin-bottom:20px;
+      padding:28px 20px 20px;text-align:center;margin-bottom:16px;
+      position:relative;
     }
+    .account-avatar-wrap{position:relative;display:inline-block;margin-bottom:12px;cursor:pointer}
     .account-avatar{
-      width:76px;height:76px;border-radius:50%;margin:0 auto 14px;
+      width:84px;height:84px;border-radius:50%;
       display:flex;align-items:center;justify-content:center;
-      font-size:30px;font-weight:900;
+      font-size:34px;font-weight:900;overflow:hidden;
       background:linear-gradient(135deg,var(--gold-l),var(--gold));
       color:#0A0A0A;border:3px solid var(--gold-d);
       box-shadow:0 4px 20px rgba(201,168,76,.35);
     }
+    .account-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+    .avatar-edit-badge{
+      position:absolute;bottom:2px;right:2px;
+      width:26px;height:26px;border-radius:50%;
+      background:var(--gold);color:#000;font-size:12px;
+      display:flex;align-items:center;justify-content:center;
+      border:2px solid var(--bg);box-shadow:0 2px 6px rgba(0,0,0,.4);
+    }
     .account-name{font-size:20px;font-weight:800;color:var(--text);margin-bottom:4px}
-    .account-email{font-size:13px;color:var(--t2)}
+    .account-email{font-size:13px;color:var(--t2);margin-bottom:14px}
+    .btn-edit-profile{
+      background:var(--gold-dim);border:1px solid var(--border);color:var(--gold);
+      padding:8px 20px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;
+      transition:background .2s;
+    }
+    .btn-edit-profile:hover{background:rgba(201,168,76,.25)}
     .account-card{background:var(--s2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:14px}
     .account-row{
       display:flex;align-items:center;gap:14px;padding:16px;
@@ -228,31 +250,104 @@
     .account-row:hover{background:var(--s3)}
     .account-row-icon{font-size:20px;width:30px;text-align:center;flex-shrink:0}
     .account-row-label{font-size:15px;font-weight:600;flex:1;color:var(--text)}
+    .account-row-value{font-size:13px;color:var(--t2);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .account-row-chevron{font-size:18px;color:var(--t3)}
     .account-row.danger .account-row-label{color:#FF6B6B}
+
+    /* ── PROFILE EDIT MODAL ─────────── */
+    .profile-modal-overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:600;
+      display:flex;align-items:flex-end;justify-content:center;
+    }
+    .profile-modal-overlay.hidden{display:none}
+    .profile-sheet{
+      background:var(--s2);border-radius:20px 20px 0 0;width:100%;max-width:480px;
+      border:1px solid var(--border);border-bottom:none;
+      animation:slideUp .3s cubic-bezier(.4,0,.2,1);
+      padding-bottom:env(safe-area-inset-bottom,20px);
+      max-height:90vh;overflow-y:auto;
+    }
+    .profile-sheet-handle{width:40px;height:4px;background:var(--s4);border-radius:2px;margin:12px auto 0}
+    .profile-sheet-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px}
+    .profile-sheet-title{font-size:18px;font-weight:800;
+      background:linear-gradient(135deg,var(--gold-l),var(--gold));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .profile-avatar-section{
+      display:flex;flex-direction:column;align-items:center;
+      padding:16px 20px;border-bottom:1px solid var(--border);
+    }
+    .profile-avatar-preview{
+      width:88px;height:88px;border-radius:50%;overflow:hidden;
+      background:linear-gradient(135deg,var(--gold-l),var(--gold));
+      color:#000;display:flex;align-items:center;justify-content:center;
+      font-size:36px;font-weight:900;border:3px solid var(--gold-d);
+      box-shadow:0 4px 20px rgba(201,168,76,.35);margin-bottom:12px;cursor:pointer;
+    }
+    .profile-avatar-preview img{width:100%;height:100%;object-fit:cover}
+    .btn-change-photo{
+      background:var(--s3);border:1px solid var(--border);color:var(--t2);
+      padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;
+    }
+    .profile-fields{padding:16px 20px;display:flex;flex-direction:column;gap:14px}
+    .pf-label{font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+    .pf-input{
+      width:100%;padding:13px 14px;border:1.5px solid var(--border);border-radius:10px;
+      font-size:15px;background:var(--s3);color:var(--text);outline:none;
+      transition:border-color .2s;
+    }
+    .pf-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-dim)}
+    .btn-save-profile{
+      width:100%;padding:15px;border:none;border-radius:12px;font-size:16px;font-weight:800;cursor:pointer;
+      background:linear-gradient(135deg,var(--gold-l),var(--gold),var(--gold-d));
+      color:#0A0A0A;box-shadow:0 4px 16px rgba(201,168,76,.35);
+      transition:opacity .2s;margin:0 20px 20px;width:calc(100% - 40px);
+    }
+    .btn-save-profile:hover{opacity:.9}
 
     /* ── BOTTOM NAV ─────────────────── */
     .bottom-nav{
       position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);
-      background:var(--s1);border-top:1px solid var(--border);
-      display:flex;align-items:stretch;z-index:200;
+      background:rgba(10,10,10,.96);border-top:1px solid var(--border);
+      display:flex;align-items:center;justify-content:space-around;
+      z-index:200;padding:0 4px;
       padding-bottom:env(safe-area-inset-bottom,0);
-      box-shadow:0 -4px 20px rgba(0,0,0,.4);
+      box-shadow:0 -4px 24px rgba(0,0,0,.6);
+      backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
     }
     .nav-item{
       flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-      gap:3px;border:none;background:none;cursor:pointer;padding:6px 2px;
+      gap:5px;border:none;background:none;cursor:pointer;padding:4px 2px;
       color:var(--t3);transition:color .2s;position:relative;
     }
     .nav-item.active{color:var(--gold)}
-    .nav-item-icon{font-size:20px;line-height:1}
-    .nav-item-label{font-size:10px;font-weight:700;letter-spacing:.3px}
+    .nav-bubble{
+      width:46px;height:46px;border-radius:14px;
+      display:flex;align-items:center;justify-content:center;
+      transition:transform .2s,background .2s,box-shadow .2s;
+      position:relative;
+    }
+    /* Each tab has its own bubble color */
+    [data-tab="tab-boards"] .nav-bubble,#nav-boards .nav-bubble      {background:rgba(26,58,107,.5)}
+    #nav-cal .nav-bubble                                              {background:rgba(26,74,46,.5)}
+    #nav-rep .nav-bubble                                              {background:rgba(74,42,14,.5)}
+    [data-tab="tab-notifications"] .nav-bubble,#nav-notif .nav-bubble{background:rgba(107,26,26,.5)}
+    [data-tab="tab-account"] .nav-bubble,#nav-acc .nav-bubble        {background:rgba(46,26,74,.5)}
+
+    .nav-item:active .nav-bubble{transform:scale(.92)}
+    .nav-item.active .nav-bubble{
+      background:linear-gradient(135deg,rgba(201,168,76,.38),rgba(201,168,76,.18)) !important;
+      border:1px solid rgba(201,168,76,.55) !important;
+      box-shadow:0 4px 14px rgba(201,168,76,.28);
+    }
+    .nav-item:not(.active):hover .nav-bubble{transform:scale(1.06);filter:brightness(1.4)}
+    .nav-item-icon{font-size:22px;line-height:1}
+    .nav-item-label{font-size:9.5px;font-weight:700;letter-spacing:.25px;text-transform:uppercase}
     .nav-badge{
-      position:absolute;top:5px;right:calc(50% - 20px);
+      position:absolute;top:-4px;right:-4px;
       background:var(--gold);color:#0A0A0A;border-radius:10px;
-      min-width:17px;height:17px;font-size:10px;font-weight:800;
+      min-width:17px;height:17px;font-size:9px;font-weight:800;
       display:flex;align-items:center;justify-content:center;padding:0 3px;
-      border:2px solid var(--s1);display:none;
+      border:2px solid var(--bg);display:none;
     }
 
     /* ── CREATE MODAL ───────────────── */
@@ -346,7 +441,10 @@
 <!-- APP -->
 <div id="app-container" class="hidden">
   <header class="top-header">
-    <span class="header-title" id="header-title">TaskFlow</span>
+    <div style="display:flex;align-items:center;gap:8px">
+      <img src="logo.svg" alt="TF" style="width:30px;height:30px;border-radius:8px"/>
+      <span class="header-title" id="header-title">TaskFlow</span>
+    </div>
     <div class="header-right">
       <button class="icon-btn" id="search-toggle" title="Buscar">🔍</button>
       <button class="fab" id="open-create" title="Nuevo tablero">＋</button>
@@ -377,10 +475,36 @@
     <!-- ACCOUNT TAB -->
     <div class="tab-pane" id="tab-account">
       <div class="account-header">
-        <div class="account-avatar" id="account-avatar">?</div>
+        <div class="account-avatar-wrap" id="avatar-wrap" onclick="openProfileEdit()">
+          <div class="account-avatar" id="account-avatar"><span id="account-initial">?</span></div>
+          <div class="avatar-edit-badge">✏️</div>
+        </div>
         <div class="account-name" id="account-name">—</div>
         <div class="account-email" id="account-email">—</div>
+        <button class="btn-edit-profile" onclick="openProfileEdit()">✏️ Editar perfil</button>
       </div>
+
+      <div class="account-card">
+        <div class="account-row" id="profile-name-row">
+          <span class="account-row-icon">👤</span>
+          <span class="account-row-label">Nombre</span>
+          <span class="account-row-value" id="profile-name-val">—</span>
+          <span class="account-row-chevron">›</span>
+        </div>
+        <div class="account-row" id="profile-phone-row">
+          <span class="account-row-icon">📞</span>
+          <span class="account-row-label">Teléfono</span>
+          <span class="account-row-value" id="profile-phone-val">—</span>
+          <span class="account-row-chevron">›</span>
+        </div>
+        <div class="account-row" id="profile-bio-row">
+          <span class="account-row-icon">📝</span>
+          <span class="account-row-label">Descripción</span>
+          <span class="account-row-value" id="profile-bio-val">—</span>
+          <span class="account-row-chevron">›</span>
+        </div>
+      </div>
+
       <div class="account-card">
         <div class="account-row" id="export-row">
           <span class="account-row-icon">📥</span>
@@ -400,31 +524,36 @@
           <span class="account-row-chevron">›</span>
         </div>
       </div>
-      <p style="text-align:center;font-size:12px;color:var(--t3);margin-top:24px">TaskFlow · v2.0</p>
+      <div style="text-align:center;padding:20px 0">
+        <img src="logo.svg" alt="TF" style="width:40px;height:40px;border-radius:10px;opacity:.7;margin-bottom:8px;display:block;margin:0 auto 8px"/>
+        <p style="font-size:12px;color:var(--t3)">TaskFlow · v2.0 · Premium</p>
+      </div>
     </div>
   </div>
 
   <!-- Bottom nav (5 items) -->
   <nav class="bottom-nav">
     <button class="nav-item active" data-tab="tab-boards">
-      <span class="nav-item-icon">🗂️</span>
+      <div class="nav-bubble"><span class="nav-item-icon">🗂️</span></div>
       <span class="nav-item-label">Tableros</span>
     </button>
     <button class="nav-item" id="nav-cal" onclick="location.href='calendar.html'">
-      <span class="nav-item-icon">📅</span>
+      <div class="nav-bubble"><span class="nav-item-icon">📅</span></div>
       <span class="nav-item-label">Calendario</span>
     </button>
     <button class="nav-item" id="nav-rep" onclick="location.href='reports.html'">
-      <span class="nav-item-icon">📊</span>
+      <div class="nav-bubble"><span class="nav-item-icon">📊</span></div>
       <span class="nav-item-label">Informes</span>
     </button>
     <button class="nav-item" data-tab="tab-notifications">
-      <span class="nav-item-icon">🔔</span>
+      <div class="nav-bubble">
+        <span class="nav-item-icon">🔔</span>
+        <span class="nav-badge" id="notif-badge">0</span>
+      </div>
       <span class="nav-item-label">Actividad</span>
-      <span class="nav-badge" id="notif-badge">0</span>
     </button>
     <button class="nav-item" data-tab="tab-account">
-      <span class="nav-item-icon">👤</span>
+      <div class="nav-bubble"><span class="nav-item-icon" id="nav-avatar-icon">👤</span></div>
       <span class="nav-item-label">Cuenta</span>
     </button>
   </nav>
@@ -449,6 +578,43 @@
   </div>
 </div>
 
+<!-- PROFILE EDIT MODAL -->
+<div class="profile-modal-overlay hidden" id="profile-modal">
+  <div class="profile-sheet">
+    <div class="profile-sheet-handle"></div>
+    <div class="profile-sheet-header">
+      <span class="profile-sheet-title">Editar perfil</span>
+      <button class="modal-close-btn" id="close-profile">✕</button>
+    </div>
+    <div class="profile-avatar-section">
+      <div class="profile-avatar-preview" id="profile-avatar-preview" onclick="document.getElementById('photo-file-input').click()">
+        <span id="profile-preview-initial">?</span>
+      </div>
+      <button class="btn-change-photo" onclick="document.getElementById('photo-file-input').click()">📷 Cambiar foto</button>
+      <input type="file" id="photo-file-input" accept="image/*" style="display:none"/>
+    </div>
+    <div class="profile-fields">
+      <div>
+        <div class="pf-label">Nombre completo</div>
+        <input class="pf-input" id="pf-name" type="text" placeholder="Tu nombre completo"/>
+      </div>
+      <div>
+        <div class="pf-label">Correo electrónico</div>
+        <input class="pf-input" id="pf-email" type="email" placeholder="tu@email.com" readonly style="opacity:.6;cursor:not-allowed"/>
+      </div>
+      <div>
+        <div class="pf-label">Teléfono / WhatsApp</div>
+        <input class="pf-input" id="pf-phone" type="tel" placeholder="+1 234 567 8900"/>
+      </div>
+      <div>
+        <div class="pf-label">Descripción</div>
+        <input class="pf-input" id="pf-bio" type="text" placeholder="Ej. Gerente de proyectos" maxlength="80"/>
+      </div>
+    </div>
+    <button class="btn-save-profile" id="btn-save-profile">✦ Guardar cambios</button>
+  </div>
+</div>
+
 <!-- INSTALL BANNER -->
 <div id="install-banner" class="hidden">
   <img src="logo.svg" alt="TF"/>
@@ -457,9 +623,9 @@
   <button class="install-dismiss" id="install-dismiss">✕</button>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
 /* ── FIREBASE ─────────────────────────────── */
 const firebaseConfig={apiKey:"AIzaSyBjRj5Ba8HQiqb6W4UBAVDGMgVLhidvGsk",authDomain:"taskflow-ec.firebaseapp.com",projectId:"taskflow-ec",storageBucket:"taskflow-ec.firebasestorage.app",messagingSenderId:"175224756577",appId:"1:175224756577:web:3fef747dcae223c934cd20"};
@@ -723,12 +889,110 @@ async function markRead(id){try{await db.collection('notifications').doc(current
 async function rejectN(id){try{await db.collection('notifications').doc(currentUser.uid).collection('messages').doc(id).delete();showToast('Rechazada')}catch{}}
 
 /* ── ACCOUNT ──────────────────────────────── */
+let profileData={};
+
 function populateAccount(user){
   const initial=(user.displayName||user.email||'?')[0].toUpperCase();
-  document.getElementById('account-avatar').textContent=initial;
+  document.getElementById('account-initial').textContent=initial;
   document.getElementById('account-name').textContent=user.displayName||user.email.split('@')[0];
   document.getElementById('account-email').textContent=user.email;
+  // Load extended profile from Firestore
+  db.collection('users').doc(user.uid).onSnapshot(doc=>{
+    if(!doc.exists)return;
+    profileData=doc.data()||{};
+    const name=profileData.name||user.displayName||user.email.split('@')[0];
+    const phone=profileData.phone||'';
+    const bio=profileData.bio||'';
+    const photo=profileData.photoURL||localStorage.getItem('profilePhoto_'+user.uid)||'';
+    document.getElementById('account-name').textContent=name;
+    document.getElementById('profile-name-val').textContent=name||'—';
+    document.getElementById('profile-phone-val').textContent=phone||'—';
+    document.getElementById('profile-bio-val').textContent=bio||'—';
+    // Show photo if available
+    const avatarEl=document.getElementById('account-avatar');
+    if(photo){
+      avatarEl.innerHTML=`<img src="${photo}" alt="foto"/>`;
+    } else {
+      avatarEl.innerHTML=`<span id="account-initial">${name[0].toUpperCase()}</span>`;
+    }
+  });
 }
+
+function openProfileEdit(){
+  if(!currentUser)return;
+  const user=currentUser;
+  document.getElementById('pf-name').value=profileData.name||user.displayName||'';
+  document.getElementById('pf-email').value=user.email||'';
+  document.getElementById('pf-phone').value=profileData.phone||'';
+  document.getElementById('pf-bio').value=profileData.bio||'';
+  // Preview avatar
+  const photo=profileData.photoURL||localStorage.getItem('profilePhoto_'+user.uid)||'';
+  const preview=document.getElementById('profile-avatar-preview');
+  if(photo){
+    preview.innerHTML=`<img src="${photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>`;
+  } else {
+    const init=(profileData.name||user.email||'?')[0].toUpperCase();
+    preview.innerHTML=`<span id="profile-preview-initial" style="font-size:36px;font-weight:900">${init}</span>`;
+  }
+  document.getElementById('profile-modal').classList.remove('hidden');
+}
+
+document.getElementById('close-profile').addEventListener('click',()=>document.getElementById('profile-modal').classList.add('hidden'));
+document.getElementById('profile-modal').addEventListener('click',e=>{if(e.target.id==='profile-modal')document.getElementById('profile-modal').classList.add('hidden')});
+
+// Photo file input
+document.getElementById('photo-file-input').addEventListener('change',e=>{
+  const file=e.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const dataUrl=ev.target.result;
+    // Resize to max 200×200 before storing
+    const img=new Image();
+    img.onload=()=>{
+      const canvas=document.createElement('canvas');
+      const max=200;
+      let w=img.width,h=img.height;
+      if(w>h){if(w>max){h=Math.round(h*max/w);w=max}}
+      else{if(h>max){w=Math.round(w*max/h);h=max}}
+      canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      const thumb=canvas.toDataURL('image/jpeg',.75);
+      // Show preview
+      document.getElementById('profile-avatar-preview').innerHTML=
+        `<img src="${thumb}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>`;
+      // Store temporarily
+      if(currentUser)localStorage.setItem('profilePhoto_'+currentUser.uid,thumb);
+    };
+    img.src=dataUrl;
+  };
+  reader.readAsDataURL(file);
+  e.target.value='';
+});
+
+document.getElementById('btn-save-profile').addEventListener('click',async()=>{
+  if(!currentUser)return;
+  const name=document.getElementById('pf-name').value.trim();
+  const phone=document.getElementById('pf-phone').value.trim();
+  const bio=document.getElementById('pf-bio').value.trim();
+  const photo=localStorage.getItem('profilePhoto_'+currentUser.uid)||profileData.photoURL||'';
+  const btn=document.getElementById('btn-save-profile');
+  btn.disabled=true;btn.textContent='Guardando…';
+  try{
+    await db.collection('users').doc(currentUser.uid).set({
+      email:currentUser.email, name, phone, bio, photoURL:photo, updatedAt:new Date()
+    },{merge:true});
+    if(name)await currentUser.updateProfile({displayName:name});
+    showToast('✅ Perfil actualizado');
+    document.getElementById('profile-modal').classList.add('hidden');
+  }catch(err){showToast(err.message,'error')}
+  finally{btn.disabled=false;btn.textContent='✦ Guardar cambios'}
+});
+
+// Profile rows open edit modal
+['profile-name-row','profile-phone-row','profile-bio-row'].forEach(id=>{
+  document.getElementById(id)?.addEventListener('click',openProfileEdit);
+});
 document.getElementById('logout-row').addEventListener('click',async()=>{try{await auth.signOut();showToast('Sesión cerrada')}catch(e){showToast(e.message,'error')}});
 document.getElementById('delete-row').addEventListener('click',async()=>{
   if(!confirm('¿Eliminar cuenta y todos tus datos permanentemente?'))return;
