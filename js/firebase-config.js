@@ -9,8 +9,11 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+window.auth = firebase.auth();
+window.db = firebase.firestore();
+// Aliases so existing scripts that use bare `db`/`auth` still work
+const auth = window.auth;
+const db = window.db;
 
 window.showToast = function(message, type = 'success') {
   document.querySelectorAll('.toast').forEach(t => t.remove());
