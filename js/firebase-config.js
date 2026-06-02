@@ -13,11 +13,13 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 window.showToast = function(message, type = 'success') {
+  document.querySelectorAll('.toast').forEach(t => t.remove());
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
   toast.textContent = message;
   document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 3000);
+  requestAnimationFrame(() => { requestAnimationFrame(() => toast.classList.add('show')); });
+  setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
 };
 
 window.showError = function(error) {

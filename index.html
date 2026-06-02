@@ -2,474 +2,885 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TaskFlow · Gestor de tareas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>TaskFlow</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root {
+      --primary: #5C6BC0;
+      --primary-dark: #3949AB;
+      --primary-light: #E8EAF6;
+      --danger: #EF5350;
+      --success: #66BB6A;
+      --warning: #FFA726;
+      --text: #172B4D;
+      --text-secondary: #626F86;
+      --bg: #F4F5F7;
+      --surface: #FFFFFF;
+      --border: #E2E8F0;
+      --shadow-sm: 0 1px 4px rgba(0,0,0,.10);
+      --shadow-md: 0 4px 16px rgba(0,0,0,.12);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,.16);
+      --radius: 12px;
+      --nav-h: 68px;
     }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f5f5f5;
-      color: #333;
-    }
-    .hidden {
-      display: none !important;
-    }
-    #auth-container {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-    .auth-box {
-      background: white;
-      border-radius: 12px;
-      padding: 40px;
-      max-width: 400px;
-      width: 90%;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-    }
-    .auth-heading h1 {
-      font-size: 28px;
-      margin-bottom: 8px;
-      color: #333;
-    }
-    .auth-heading p {
-      color: #666;
-      font-size: 14px;
-      margin-bottom: 24px;
-    }
-    .form-group {
-      margin-bottom: 16px;
-      display: none;
-    }
-    .form-group.active {
-      display: block;
-    }
-    .form-group label {
-      display: block;
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 6px;
-      color: #333;
-    }
-    .form-group input {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 14px;
-    }
-    .form-group input:focus {
-      outline: none;
-      border-color: #667eea;
-    }
-    #auth-form button {
-      width: 100%;
-      padding: 12px;
-      background: #667eea;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 12px;
-    }
-    #auth-form button:hover {
-      background: #5568d3;
-    }
-    .auth-toggle {
-      text-align: center;
-      margin-top: 20px;
-      font-size: 14px;
-      color: #666;
-    }
-    .auth-toggle a {
-      color: #667eea;
-      cursor: pointer;
-      text-decoration: none;
-      font-weight: 600;
-    }
-    #app-container {
-      /* visibility controlled exclusively via .hidden class */
-    }
-    .navbar {
-      background: white;
-      padding: 16px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #eee;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-    .navbar-brand {
-      font-size: 20px;
-      font-weight: 700;
-      color: #667eea;
-    }
-    .navbar-right {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    .logout-btn {
-      padding: 8px 16px;
-      background: #ff6b6b;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-    }
-    .main-content {
-      padding: 32px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    .boards-header h2 {
-      font-size: 24px;
-      margin-bottom: 8px;
-    }
-    .boards-header p {
-      color: #666;
-      margin-bottom: 24px;
-    }
-    #boards-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 16px;
-    }
-    .board-card {
-      padding: 20px;
-      border-radius: 8px;
-      color: white;
-      transition: transform 0.2s;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-    .board-card:hover {
-      transform: translateY(-4px);
-    }
-    .board-card h3 {
-      font-size: 18px;
-      margin-bottom: 16px;
-    }
-    .board-actions {
-      display: flex;
-      gap: 8px;
-    }
-    .btn-sm {
-      padding: 8px 12px;
-      background: rgba(255, 255, 255, 0.3);
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 600;
-    }
-    .board-create {
-      padding: 24px;
-      border: 2px dashed #ddd;
-      border-radius: 8px;
-      text-align: center;
-    }
-    .board-create h3 {
-      margin-bottom: 16px;
-      color: #333;
-    }
-    .board-create input {
-      padding: 10px;
-      margin: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 14px;
-    }
-    .board-create button {
-      padding: 10px 20px;
-      background: #667eea;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: 600;
-    }
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    html, body { height:100%; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); }
+
+    /* ── TOAST ─────────────────────────────── */
     .toast {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      padding: 16px 24px;
-      background: #333;
-      color: white;
-      border-radius: 8px;
-      font-size: 14px;
-      z-index: 9999;
-      animation: slideIn 0.3s ease-out;
+      position:fixed; bottom:calc(var(--nav-h) + 16px); left:50%; transform:translateX(-50%) translateY(20px);
+      padding:12px 20px; border-radius:24px; font-size:14px; font-weight:600;
+      box-shadow:var(--shadow-md); z-index:9999; white-space:nowrap;
+      opacity:0; transition:opacity .25s,transform .25s; pointer-events:none;
     }
-    .toast-success {
-      background: #4caf50;
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    .toast-success { background:#1B5E20; color:#fff; }
+    .toast-error   { background:#B71C1C; color:#fff; }
+    .toast-info    { background:#0D47A1; color:#fff; }
+
+    /* ── AUTH ──────────────────────────────── */
+    #auth-container {
+      display:flex; align-items:center; justify-content:center;
+      min-height:100vh; padding:24px;
+      background:linear-gradient(145deg,#3949AB 0%,#7B1FA2 100%);
     }
-    .toast-error {
-      background: #f44336;
+    .auth-card {
+      background:#fff; border-radius:24px; padding:40px 32px;
+      width:100%; max-width:400px; box-shadow:var(--shadow-lg);
     }
-    @keyframes slideIn {
-      from {
-        transform: translateX(400px);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
+    .auth-logo {
+      text-align:center; margin-bottom:32px;
     }
-    .empty-state {
-      text-align: center;
-      padding: 40px;
-      color: #666;
-      font-size: 16px;
+    .auth-logo .logo-icon {
+      width:64px; height:64px; background:linear-gradient(135deg,#5C6BC0,#7B1FA2);
+      border-radius:18px; display:inline-flex; align-items:center; justify-content:center;
+      font-size:32px; margin-bottom:12px; box-shadow:0 4px 16px rgba(92,107,192,.4);
+    }
+    .auth-logo h1 { font-size:28px; font-weight:800; color:var(--text); letter-spacing:-.5px; }
+    .auth-logo p  { font-size:14px; color:var(--text-secondary); margin-top:4px; }
+    .auth-label { display:block; font-size:13px; font-weight:600; color:var(--text); margin-bottom:6px; }
+    .auth-input {
+      width:100%; padding:13px 16px; border:2px solid var(--border); border-radius:10px;
+      font-size:15px; background:#FAFBFC; transition:border-color .2s,box-shadow .2s;
+      outline:none; color:var(--text);
+    }
+    .auth-input:focus { border-color:var(--primary); background:#fff; box-shadow:0 0 0 3px var(--primary-light); }
+    .auth-field { margin-bottom:16px; }
+    #name-group { display:none; }
+    .auth-btn {
+      width:100%; padding:14px; background:linear-gradient(135deg,#5C6BC0,#7B1FA2);
+      color:#fff; border:none; border-radius:10px; font-size:16px; font-weight:700;
+      cursor:pointer; margin-top:8px; transition:opacity .2s,transform .2s;
+      box-shadow:0 4px 12px rgba(92,107,192,.4);
+    }
+    .auth-btn:hover  { opacity:.9; }
+    .auth-btn:active { transform:scale(.98); }
+    .auth-divider { display:flex; align-items:center; gap:12px; margin:20px 0; color:var(--text-secondary); font-size:13px; }
+    .auth-divider::before,.auth-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+    .auth-toggle-text { text-align:center; font-size:14px; color:var(--text-secondary); }
+    .auth-toggle-text a { color:var(--primary); font-weight:600; text-decoration:none; cursor:pointer; }
+
+    /* ── APP SHELL ─────────────────────────── */
+    #app-container { display:flex; flex-direction:column; height:100vh; }
+    #app-container.hidden { display:none; }
+
+    /* ── TOP HEADER ────────────────────────── */
+    .top-header {
+      background:#fff; padding:0 20px;
+      height:60px; display:flex; align-items:center; justify-content:space-between;
+      box-shadow:var(--shadow-sm); z-index:100; flex-shrink:0;
+      border-bottom:1px solid var(--border);
+    }
+    .header-title { font-size:22px; font-weight:800; color:var(--text); letter-spacing:-.5px; }
+    .header-right { display:flex; align-items:center; gap:8px; }
+    .icon-btn {
+      width:40px; height:40px; border-radius:50%; border:none;
+      background:var(--bg); color:var(--text); font-size:18px;
+      cursor:pointer; display:flex; align-items:center; justify-content:center;
+      transition:background .2s;
+    }
+    .icon-btn:hover { background:#E8EAF6; }
+    .fab-btn {
+      width:40px; height:40px; border-radius:50%; border:none;
+      background:linear-gradient(135deg,#5C6BC0,#7B1FA2); color:#fff;
+      font-size:22px; font-weight:300; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow:0 3px 10px rgba(92,107,192,.5); transition:transform .2s,opacity .2s;
+    }
+    .fab-btn:hover  { opacity:.9; }
+    .fab-btn:active { transform:scale(.92); }
+
+    /* ── SEARCH BAR ────────────────────────── */
+    #search-bar {
+      background:#fff; padding:10px 16px 12px;
+      border-bottom:1px solid var(--border); flex-shrink:0;
+    }
+    #search-bar.hidden { display:none; }
+    .search-input-wrap {
+      display:flex; align-items:center; gap:8px;
+      background:var(--bg); border-radius:10px; padding:0 14px;
+      border:2px solid transparent; transition:border-color .2s;
+    }
+    .search-input-wrap:focus-within { border-color:var(--primary); background:#fff; }
+    .search-input-wrap span { font-size:16px; color:var(--text-secondary); }
+    #search-input {
+      flex:1; padding:10px 0; border:none; background:transparent;
+      font-size:15px; outline:none; color:var(--text);
+    }
+    #search-input::placeholder { color:var(--text-secondary); }
+
+    /* ── MAIN CONTENT ──────────────────────── */
+    .main-scroll {
+      flex:1; overflow-y:auto; padding-bottom:calc(var(--nav-h) + 8px);
+    }
+    .tab-pane { display:none; padding:16px; }
+    .tab-pane.active { display:block; }
+
+    /* ── SECTION LABEL ─────────────────────── */
+    .section-label {
+      font-size:11px; font-weight:700; letter-spacing:.8px;
+      color:var(--text-secondary); text-transform:uppercase;
+      margin:8px 0 12px; padding-left:4px;
+    }
+
+    /* ── BOARDS GRID ───────────────────────── */
+    .boards-grid {
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+      gap:12px;
+    }
+    @media(max-width:400px) { .boards-grid { grid-template-columns:1fr 1fr; } }
+
+    .board-card {
+      border-radius:var(--radius); padding:16px 14px 48px;
+      min-height:96px; position:relative; cursor:pointer;
+      box-shadow:var(--shadow-sm); transition:transform .2s,box-shadow .2s;
+      overflow:hidden;
+    }
+    .board-card::before {
+      content:''; position:absolute; inset:0;
+      background:linear-gradient(145deg,rgba(255,255,255,.15),rgba(0,0,0,.15));
+    }
+    .board-card:hover  { transform:translateY(-3px); box-shadow:var(--shadow-md); }
+    .board-card:active { transform:scale(.97); }
+    .board-card-title  { font-size:15px; font-weight:700; color:#fff; word-break:break-word; line-height:1.3; position:relative; }
+    .board-card-footer {
+      position:absolute; bottom:10px; left:14px; right:10px;
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    .board-card-info { font-size:11px; color:rgba(255,255,255,.8); }
+    .board-card-del {
+      background:rgba(0,0,0,.2); color:#fff; border:none;
+      border-radius:6px; width:28px; height:28px;
+      font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+      opacity:0; transition:opacity .2s; flex-shrink:0;
+    }
+    .board-card:hover .board-card-del { opacity:1; }
+
+    /* Create card */
+    .create-card {
+      border-radius:var(--radius); border:2px dashed var(--border);
+      min-height:96px; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:6px;
+      cursor:pointer; background:var(--surface);
+      transition:border-color .2s,background .2s; color:var(--text-secondary);
+    }
+    .create-card:hover { border-color:var(--primary); background:var(--primary-light); color:var(--primary); }
+    .create-card .plus  { font-size:28px; line-height:1; }
+    .create-card .label { font-size:13px; font-weight:600; }
+
+    /* Empty state */
+    .empty-state { text-align:center; padding:48px 24px; }
+    .empty-state .emoji { font-size:56px; margin-bottom:16px; }
+    .empty-state h3 { font-size:18px; font-weight:700; margin-bottom:8px; }
+    .empty-state p  { font-size:14px; color:var(--text-secondary); line-height:1.5; }
+
+    /* ── NOTIFICATIONS TAB ─────────────────── */
+    .notif-item {
+      background:var(--surface); border-radius:var(--radius); padding:16px;
+      margin-bottom:10px; box-shadow:var(--shadow-sm);
+      display:flex; gap:14px; align-items:flex-start;
+      border-left:4px solid transparent;
+    }
+    .notif-item.unread { border-left-color:var(--primary); background:#F8F9FF; }
+    .notif-icon { font-size:24px; flex-shrink:0; margin-top:2px; }
+    .notif-body { flex:1; min-width:0; }
+    .notif-msg  { font-size:14px; color:var(--text); line-height:1.4; margin-bottom:4px; }
+    .notif-time { font-size:12px; color:var(--text-secondary); }
+    .notif-actions { display:flex; gap:8px; margin-top:10px; }
+    .notif-accept,.notif-reject {
+      padding:6px 14px; border:none; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; transition:opacity .2s;
+    }
+    .notif-accept { background:var(--success); color:#fff; }
+    .notif-reject { background:var(--bg); color:var(--text); border:1px solid var(--border); }
+
+    /* ── ACCOUNT TAB ───────────────────────── */
+    .account-header {
+      background:linear-gradient(135deg,#5C6BC0,#7B1FA2); border-radius:var(--radius);
+      padding:28px 20px; text-align:center; color:#fff; margin-bottom:20px;
+    }
+    .account-avatar {
+      width:72px; height:72px; border-radius:50%; background:rgba(255,255,255,.25);
+      margin:0 auto 12px; display:flex; align-items:center; justify-content:center;
+      font-size:28px; font-weight:800; border:3px solid rgba(255,255,255,.5);
+    }
+    .account-name  { font-size:20px; font-weight:800; margin-bottom:4px; }
+    .account-email { font-size:14px; opacity:.85; }
+
+    .account-card {
+      background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow-sm);
+      overflow:hidden; margin-bottom:16px;
+    }
+    .account-row {
+      display:flex; align-items:center; gap:14px; padding:16px;
+      border-bottom:1px solid var(--border); cursor:pointer;
+      transition:background .15s;
+    }
+    .account-row:last-child { border-bottom:none; }
+    .account-row:hover { background:var(--bg); }
+    .account-row-icon { font-size:20px; width:32px; text-align:center; flex-shrink:0; }
+    .account-row-label { font-size:15px; font-weight:500; flex:1; }
+    .account-row-chevron { font-size:18px; color:var(--text-secondary); }
+    .account-row.danger { }
+    .account-row.danger .account-row-label { color:var(--danger); }
+
+    /* ── BOTTOM NAV ────────────────────────── */
+    .bottom-nav {
+      position:fixed; bottom:0; left:0; right:0;
+      height:var(--nav-h); background:#fff;
+      border-top:1px solid var(--border); box-shadow:0 -2px 12px rgba(0,0,0,.08);
+      display:flex; align-items:stretch; z-index:200;
+      padding-bottom:env(safe-area-inset-bottom,0);
+    }
+    .nav-item {
+      flex:1; display:flex; flex-direction:column; align-items:center;
+      justify-content:center; gap:4px; border:none; background:none;
+      cursor:pointer; padding:8px 4px; transition:color .2s;
+      color:var(--text-secondary); position:relative;
+    }
+    .nav-item.active { color:var(--primary); }
+    .nav-item-icon { font-size:22px; line-height:1; }
+    .nav-item-label { font-size:11px; font-weight:600; }
+    .nav-badge {
+      position:absolute; top:6px; right:calc(50% - 18px);
+      background:var(--danger); color:#fff; border-radius:10px;
+      min-width:18px; height:18px; font-size:11px; font-weight:700;
+      display:flex; align-items:center; justify-content:center;
+      padding:0 4px; border:2px solid #fff;
+    }
+
+    /* ── CREATE MODAL ──────────────────────── */
+    .modal-overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,.5);
+      z-index:500; display:flex; align-items:flex-end; justify-content:center;
+    }
+    .modal-overlay.hidden { display:none; }
+    .modal-sheet {
+      background:#fff; border-radius:20px 20px 0 0; width:100%;
+      max-width:480px; padding:0 0 env(safe-area-inset-bottom,20px);
+      animation:slideUp .3s cubic-bezier(.4,0,.2,1);
+    }
+    @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+    .modal-handle { width:40px; height:4px; background:var(--border); border-radius:2px; margin:12px auto 0; }
+    .modal-header-row {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:16px 20px;
+    }
+    .modal-title  { font-size:18px; font-weight:700; }
+    .modal-close-btn { background:var(--bg); border:none; border-radius:50%; width:32px; height:32px; font-size:18px; cursor:pointer; color:var(--text-secondary); display:flex; align-items:center; justify-content:center; }
+    .modal-body   { padding:0 20px 24px; }
+    .field-label  { font-size:13px; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
+    .board-name-input {
+      width:100%; padding:14px 16px; border:2px solid var(--border); border-radius:10px;
+      font-size:16px; font-weight:600; outline:none; color:var(--text);
+      transition:border-color .2s; margin-bottom:20px;
+    }
+    .board-name-input:focus { border-color:var(--primary); }
+    .color-palette { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:24px; }
+    .color-swatch {
+      width:44px; height:44px; border-radius:10px; cursor:pointer;
+      border:3px solid transparent; transition:transform .15s,border-color .15s;
+      position:relative;
+    }
+    .color-swatch:hover  { transform:scale(1.1); }
+    .color-swatch.active { border-color:#fff; box-shadow:0 0 0 3px var(--primary); transform:scale(1.05); }
+    .color-swatch.active::after {
+      content:'✓'; position:absolute; inset:0; display:flex; align-items:center;
+      justify-content:center; color:#fff; font-weight:800; font-size:18px;
+    }
+    .create-board-btn {
+      width:100%; padding:15px; background:linear-gradient(135deg,#5C6BC0,#7B1FA2);
+      color:#fff; border:none; border-radius:12px; font-size:16px; font-weight:700;
+      cursor:pointer; box-shadow:0 4px 12px rgba(92,107,192,.4);
+      transition:opacity .2s,transform .2s;
+    }
+    .create-board-btn:hover  { opacity:.9; }
+    .create-board-btn:active { transform:scale(.98); }
+
+    /* Color preview strip in modal */
+    .color-preview {
+      height:8px; border-radius:4px; margin-bottom:16px;
+      transition:background .3s;
     }
   </style>
 </head>
 <body>
-  <div id="auth-container">
-    <div class="auth-box">
-      <div class="auth-heading">
-        <h1 id="auth-title">Iniciar sesión</h1>
-        <p>Organiza tus tareas en tableros Kanban</p>
+
+<!-- ══════════════════ AUTH ══════════════════ -->
+<div id="auth-container">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="logo-icon">✦</div>
+      <h1>TaskFlow</h1>
+      <p id="auth-subtitle">Organiza tus proyectos en tableros</p>
+    </div>
+
+    <form id="auth-form" autocomplete="off">
+      <div class="auth-field" id="name-group">
+        <label class="auth-label" for="name">Nombre</label>
+        <input class="auth-input" type="text" id="name" placeholder="Tu nombre completo" autocomplete="name" />
       </div>
-      <form id="auth-form">
-        <div class="form-group active">
-          <label for="email">Email</label>
-          <input type="email" id="email" placeholder="tu@email.com" required />
-        </div>
-        <div class="form-group active">
-          <label for="password">Contraseña</label>
-          <input type="password" id="password" placeholder="••••••••" required />
-        </div>
-        <div class="form-group" id="name-group">
-          <label for="name">Nombre</label>
-          <input type="text" id="name" placeholder="Tu nombre" />
-        </div>
-        <button type="submit" id="auth-btn">Iniciar sesión</button>
-      </form>
-      <div class="auth-toggle" id="toggle-mode">
-        ¿No tienes cuenta? <a href="#">Regístrate aquí</a>
+      <div class="auth-field">
+        <label class="auth-label" for="email">Correo electrónico</label>
+        <input class="auth-input" type="email" id="email" placeholder="tu@email.com" autocomplete="email" required />
       </div>
+      <div class="auth-field">
+        <label class="auth-label" for="password">Contraseña</label>
+        <input class="auth-input" type="password" id="password" placeholder="Mínimo 6 caracteres" autocomplete="current-password" required />
+      </div>
+      <button class="auth-btn" type="submit" id="auth-btn">Iniciar sesión</button>
+    </form>
+
+    <div class="auth-divider">o</div>
+    <p class="auth-toggle-text">
+      <span id="toggle-text">¿No tienes cuenta?</span>
+      <a id="toggle-mode">Regístrate aquí</a>
+    </p>
+  </div>
+</div>
+
+<!-- ══════════════════ APP ══════════════════ -->
+<div id="app-container" class="hidden">
+
+  <!-- Header -->
+  <header class="top-header">
+    <h1 class="header-title" id="header-title">Tableros</h1>
+    <div class="header-right">
+      <button class="icon-btn" id="search-toggle" title="Buscar">🔍</button>
+      <button class="fab-btn" id="open-create" title="Nuevo tablero">＋</button>
+    </div>
+  </header>
+
+  <!-- Search bar -->
+  <div id="search-bar" class="hidden">
+    <div class="search-input-wrap">
+      <span>🔍</span>
+      <input id="search-input" type="search" placeholder="Buscar tableros…" autocomplete="off" />
+      <button id="search-clear" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text-secondary);">✕</button>
     </div>
   </div>
 
-  <div id="app-container" class="hidden">
-    <div class="navbar">
-      <span class="navbar-brand">TaskFlow</span>
-      <div class="navbar-right">
-        <span id="user-email" style="color: #666; font-size: 14px;"></span>
-        <button class="logout-btn" id="logout-btn">Salir</button>
-      </div>
+  <!-- Scrollable content -->
+  <div class="main-scroll">
+
+    <!-- BOARDS TAB -->
+    <div class="tab-pane active" id="tab-boards">
+      <p class="section-label" id="boards-section-label">Tus tableros</p>
+      <div class="boards-grid" id="boards-container"></div>
     </div>
-    <div class="main-content">
-      <div class="boards-header">
-        <h2>Tus tableros</h2>
-        <p>Haz clic en un tablero para abrir, o crea uno nuevo.</p>
+
+    <!-- NOTIFICATIONS TAB -->
+    <div class="tab-pane" id="tab-notifications">
+      <p class="section-label">Actividad reciente</p>
+      <div id="notif-list"><p style="text-align:center;color:var(--text-secondary);padding:40px 0">Cargando…</p></div>
+    </div>
+
+    <!-- ACCOUNT TAB -->
+    <div class="tab-pane" id="tab-account">
+      <div class="account-header">
+        <div class="account-avatar" id="account-avatar">?</div>
+        <div class="account-name" id="account-name">—</div>
+        <div class="account-email" id="account-email">—</div>
       </div>
-      <div id="boards-container"></div>
+
+      <div class="account-card">
+        <div class="account-row" id="export-row">
+          <span class="account-row-icon">📥</span>
+          <span class="account-row-label">Exportar mis datos</span>
+          <span class="account-row-chevron">›</span>
+        </div>
+      </div>
+
+      <div class="account-card">
+        <div class="account-row danger" id="logout-row">
+          <span class="account-row-icon">🚪</span>
+          <span class="account-row-label">Cerrar sesión</span>
+          <span class="account-row-chevron">›</span>
+        </div>
+        <div class="account-row danger" id="delete-row">
+          <span class="account-row-icon">🗑️</span>
+          <span class="account-row-label">Eliminar cuenta</span>
+          <span class="account-row-chevron">›</span>
+        </div>
+      </div>
+
+      <p style="text-align:center;font-size:12px;color:var(--text-secondary);margin-top:24px;">
+        TaskFlow Lite · v1.0
+      </p>
+    </div>
+
+  </div><!-- /main-scroll -->
+
+  <!-- Bottom nav -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-tab="tab-boards" id="nav-boards">
+      <span class="nav-item-icon">🗂️</span>
+      <span class="nav-item-label">Tableros</span>
+    </button>
+    <button class="nav-item" data-tab="tab-notifications" id="nav-notifications">
+      <span class="nav-item-icon">🔔</span>
+      <span class="nav-item-label">Actividad</span>
+      <span class="nav-badge" id="notif-badge" style="display:none">0</span>
+    </button>
+    <button class="nav-item" data-tab="tab-account" id="nav-account">
+      <span class="nav-item-icon">👤</span>
+      <span class="nav-item-label">Cuenta</span>
+    </button>
+  </nav>
+
+</div><!-- /app-container -->
+
+<!-- ══════════════ CREATE BOARD MODAL ══════════════ -->
+<div class="modal-overlay hidden" id="create-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header-row">
+      <span class="modal-title">Nuevo tablero</span>
+      <button class="modal-close-btn" id="close-create">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="color-preview" id="color-preview" style="background:#5C6BC0;"></div>
+      <div class="field-label">Nombre del tablero</div>
+      <input class="board-name-input" id="new-board-name" type="text" placeholder="Ej. Proyectos Q3, Reuniones…" maxlength="60" />
+      <div class="field-label">Color</div>
+      <div class="color-palette" id="color-palette"></div>
+      <button class="create-board-btn" id="confirm-create">Crear tablero</button>
     </div>
   </div>
+</div>
 
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<!-- Firebase SDK (compat) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBjRj5Ba8HQiqb6W4UBAVDGMgVLhidvGsk",
-      authDomain: "taskflow-ec.firebaseapp.com",
-      projectId: "taskflow-ec",
-      storageBucket: "taskflow-ec.firebasestorage.app",
-      messagingSenderId: "175224756577",
-      appId: "1:175224756577:web:3fef747dcae223c934cd20"
-    };
+<script>
+/* ── FIREBASE ──────────────────────────────────── */
+const firebaseConfig = {
+  apiKey: "AIzaSyBjRj5Ba8HQiqb6W4UBAVDGMgVLhidvGsk",
+  authDomain: "taskflow-ec.firebaseapp.com",
+  projectId: "taskflow-ec",
+  storageBucket: "taskflow-ec.firebasestorage.app",
+  messagingSenderId: "175224756577",
+  appId: "1:175224756577:web:3fef747dcae223c934cd20"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.firestore();
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+/* ── STATE ─────────────────────────────────────── */
+let currentUser    = null;
+let isRegisterMode = false;
+let allBoards      = [];
+let selectedColor  = '#5C6BC0';
 
-    let currentUser = null;
-    let isRegisterMode = false;
+const COLORS = [
+  { hex:'#5C6BC0', label:'Índigo'  },
+  { hex:'#1E88E5', label:'Azul'    },
+  { hex:'#00ACC1', label:'Cian'    },
+  { hex:'#43A047', label:'Verde'   },
+  { hex:'#FFB300', label:'Ámbar'   },
+  { hex:'#FB8C00', label:'Naranja' },
+  { hex:'#E53935', label:'Rojo'    },
+  { hex:'#8E24AA', label:'Morado'  },
+  { hex:'#546E7A', label:'Slate'   },
+  { hex:'#6D4C41', label:'Café'    },
+];
 
-    function showToast(msg, type = 'success') {
-      const t = document.createElement('div');
-      t.className = `toast toast-${type}`;
-      t.textContent = msg;
-      document.body.appendChild(t);
-      setTimeout(() => t.remove(), 3000);
+/* ── TOAST ─────────────────────────────────────── */
+function showToast(msg, type = 'success') {
+  document.querySelectorAll('.toast').forEach(t => t.remove());
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  requestAnimationFrame(() => { requestAnimationFrame(() => t.classList.add('show')); });
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3000);
+}
+
+/* ── DOM REFS ──────────────────────────────────── */
+const authContainer   = document.getElementById('auth-container');
+const appContainer    = document.getElementById('app-container');
+const authForm        = document.getElementById('auth-form');
+const authBtn         = document.getElementById('auth-btn');
+const authSubtitle    = document.getElementById('auth-subtitle');
+const toggleMode      = document.getElementById('toggle-mode');
+const toggleText      = document.getElementById('toggle-text');
+const nameGroup       = document.getElementById('name-group');
+const boardsContainer = document.getElementById('boards-container');
+const headerTitle     = document.getElementById('header-title');
+const searchBar       = document.getElementById('search-bar');
+const searchInput     = document.getElementById('search-input');
+const createModal     = document.getElementById('create-modal');
+const colorPreview    = document.getElementById('color-preview');
+const notifList       = document.getElementById('notif-list');
+const notifBadge      = document.getElementById('notif-badge');
+
+/* ── AUTH STATE ────────────────────────────────── */
+auth.onAuthStateChanged(user => {
+  currentUser = user;
+  if (user) {
+    authContainer.style.display = 'none';
+    appContainer.classList.remove('hidden');
+    populateAccount(user);
+    loadBoards();
+    loadNotifications();
+  } else {
+    authContainer.style.display = 'flex';
+    appContainer.classList.add('hidden');
+  }
+});
+
+/* ── AUTH FORM ─────────────────────────────────── */
+toggleMode.addEventListener('click', () => {
+  isRegisterMode = !isRegisterMode;
+  if (isRegisterMode) {
+    nameGroup.style.display  = 'block';
+    authBtn.textContent      = 'Crear cuenta';
+    authSubtitle.textContent = 'Crea tu cuenta gratis';
+    toggleText.textContent   = '¿Ya tienes cuenta?';
+    toggleMode.textContent   = 'Inicia sesión';
+  } else {
+    nameGroup.style.display  = 'none';
+    authBtn.textContent      = 'Iniciar sesión';
+    authSubtitle.textContent = 'Organiza tus proyectos en tableros';
+    toggleText.textContent   = '¿No tienes cuenta?';
+    toggleMode.textContent   = 'Regístrate aquí';
+  }
+});
+
+authForm.addEventListener('submit', async e => {
+  e.preventDefault();
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const name     = document.getElementById('name').value.trim();
+  authBtn.disabled = true;
+  authBtn.textContent = '…';
+  try {
+    if (isRegisterMode) {
+      if (!name) { showToast('Ingresa tu nombre', 'error'); return; }
+      const { user } = await auth.createUserWithEmailAndPassword(email, password);
+      await db.collection('users').doc(user.uid).set({ email, name, createdAt: new Date() });
+      showToast('✅ Bienvenido a TaskFlow');
+    } else {
+      await auth.signInWithEmailAndPassword(email, password);
+      showToast('✅ Sesión iniciada');
     }
+    authForm.reset();
+  } catch (err) {
+    const MAP = {
+      'auth/user-not-found': 'Usuario no encontrado',
+      'auth/wrong-password': 'Contraseña incorrecta',
+      'auth/email-already-in-use': 'El correo ya está registrado',
+      'auth/weak-password': 'La contraseña debe tener al menos 6 caracteres',
+      'auth/invalid-email': 'Correo inválido',
+    };
+    showToast(MAP[err.code] || err.message, 'error');
+  } finally {
+    authBtn.disabled = false;
+    authBtn.textContent = isRegisterMode ? 'Crear cuenta' : 'Iniciar sesión';
+  }
+});
 
-    const authForm = document.getElementById('auth-form');
-    const toggleBtn = document.getElementById('toggle-mode');
-    const authTitle = document.getElementById('auth-title');
-    const authBtn = document.getElementById('auth-btn');
-    const nameGroup = document.getElementById('name-group');
-    const logoutBtn = document.getElementById('logout-btn');
-    const userEmail = document.getElementById('user-email');
-    const authContainer = document.getElementById('auth-container');
-    const appContainer = document.getElementById('app-container');
-    const boardsContainer = document.getElementById('boards-container');
+/* ── BOARDS ────────────────────────────────────── */
+async function loadBoards() {
+  if (!currentUser) return;
+  try {
+    const snap = await db.collection('users').doc(currentUser.uid).collection('boards')
+      .orderBy('createdAt', 'desc').get();
+    allBoards = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderBoards(allBoards);
+  } catch (err) {
+    showToast('Error cargando tableros', 'error');
+  }
+}
 
-    toggleBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      isRegisterMode = !isRegisterMode;
-      if (isRegisterMode) {
-        authTitle.textContent = 'Crear cuenta';
-        authBtn.textContent = 'Crear cuenta';
-        nameGroup.classList.add('active');
-        toggleBtn.innerHTML = '¿Ya tienes cuenta? <a href="#">Inicia sesión aquí</a>';
-      } else {
-        authTitle.textContent = 'Iniciar sesión';
-        authBtn.textContent = 'Iniciar sesión';
-        nameGroup.classList.remove('active');
-        toggleBtn.innerHTML = '¿No tienes cuenta? <a href="#">Regístrate aquí</a>';
-      }
+function renderBoards(boards) {
+  boardsContainer.innerHTML = '';
+  if (boards.length === 0 && !searchInput.value) {
+    boardsContainer.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <div class="emoji">🗂️</div>
+        <h3>Sin tableros aún</h3>
+        <p>Toca el botón <strong>＋</strong> para crear tu primer tablero.</p>
+      </div>`;
+    return;
+  }
+  boards.forEach(board => {
+    const card = document.createElement('div');
+    card.className = 'board-card';
+    card.style.background = board.background || '#5C6BC0';
+    const date = board.createdAt?.toDate ? board.createdAt.toDate().toLocaleDateString('es-ES', { day:'numeric', month:'short' }) : '';
+    card.innerHTML = `
+      <div class="board-card-title">${escHtml(board.title)}</div>
+      <div class="board-card-footer">
+        <span class="board-card-info">${date}</span>
+        <button class="board-card-del" data-id="${board.id}" title="Eliminar">🗑️</button>
+      </div>`;
+    card.addEventListener('click', e => {
+      if (e.target.closest('.board-card-del')) return;
+      openBoard(board.id);
     });
-
-    authForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value.trim();
-      const name = document.getElementById('name').value.trim();
-
-      if (!email || !password) {
-        showToast('Llena todos los campos', 'error');
-        return;
-      }
-
-      try {
-        if (isRegisterMode) {
-          if (!name) {
-            showToast('Ingresa tu nombre', 'error');
-            return;
-          }
-          await auth.createUserWithEmailAndPassword(email, password);
-          await db.collection('users').doc(auth.currentUser.uid).set({
-            email: email,
-            name: name,
-            createdAt: new Date()
-          });
-          showToast('✅ Cuenta creada');
-          authForm.reset();
-          isRegisterMode = false;
-          authTitle.textContent = 'Iniciar sesión';
-          authBtn.textContent = 'Iniciar sesión';
-          nameGroup.classList.remove('active');
-          toggleBtn.innerHTML = '¿No tienes cuenta? <a href="#">Regístrate aquí</a>';
-        } else {
-          await auth.signInWithEmailAndPassword(email, password);
-          showToast('✅ Sesión iniciada');
-          authForm.reset();
-        }
-      } catch (err) {
-        showToast(err.message, 'error');
-      }
+    card.querySelector('.board-card-del').addEventListener('click', e => {
+      e.stopPropagation();
+      deleteBoard(board.id, board.title);
     });
+    boardsContainer.appendChild(card);
+  });
+}
 
-    logoutBtn.addEventListener('click', async () => {
-      try {
-        await auth.signOut();
-        showToast('Sesión cerrada');
-      } catch (err) {
-        showToast(err.message, 'error');
-      }
+async function deleteBoard(id, title) {
+  if (!confirm(`¿Eliminar "${title}"? Esta acción no se puede deshacer.`)) return;
+  try {
+    await db.collection('users').doc(currentUser.uid).collection('boards').doc(id).delete();
+    showToast('Tablero eliminado');
+    loadBoards();
+  } catch (err) { showToast(err.message, 'error'); }
+}
+
+function openBoard(id) {
+  localStorage.setItem('selectedBoardId', id);
+  localStorage.setItem('selectedUserId', currentUser.uid);
+  window.location.href = `board.html?id=${id}`;
+}
+
+/* ── CREATE BOARD ──────────────────────────────── */
+function buildColorPalette() {
+  const palette = document.getElementById('color-palette');
+  palette.innerHTML = '';
+  COLORS.forEach(c => {
+    const sw = document.createElement('div');
+    sw.className = 'color-swatch' + (c.hex === selectedColor ? ' active' : '');
+    sw.style.background = c.hex;
+    sw.title = c.label;
+    sw.addEventListener('click', () => {
+      document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+      sw.classList.add('active');
+      selectedColor = c.hex;
+      colorPreview.style.background = c.hex;
     });
+    palette.appendChild(sw);
+  });
+  colorPreview.style.background = selectedColor;
+}
 
-    async function loadBoards() {
-      if (!currentUser) return;
-      try {
-        boardsContainer.innerHTML = '';
-        const snap = await db.collection('users').doc(currentUser.uid).collection('boards').get();
-        if (snap.empty) {
-          boardsContainer.innerHTML = '<p class="empty-state">No hay tableros</p>';
-        } else {
-          snap.forEach(doc => {
-            const board = doc.data();
-            const card = document.createElement('div');
-            card.className = 'board-card';
-            card.style.backgroundColor = board.background || '#0079bf';
-            card.innerHTML = `
-              <h3>${board.title}</h3>
-              <div class="board-actions">
-                <button class="btn-sm" onclick="openBoard('${doc.id}')">Abrir</button>
-                <button class="btn-sm" onclick="deleteBoard('${doc.id}')">Eliminar</button>
-              </div>
-            `;
-            boardsContainer.appendChild(card);
-          });
-        }
-        const form = document.createElement('div');
-        form.className = 'board-create';
-        form.innerHTML = `
-          <h3>+ Crear nuevo tablero</h3>
-          <input type="text" id="new-board-name" placeholder="Nombre" />
-          <input type="color" id="new-board-color" value="#0079bf" />
-          <button onclick="createBoard()">Crear</button>
-        `;
-        boardsContainer.appendChild(form);
-      } catch (err) {
-        showToast('Error cargando tableros', 'error');
-      }
+document.getElementById('open-create').addEventListener('click', () => {
+  document.getElementById('new-board-name').value = '';
+  selectedColor = COLORS[0].hex;
+  buildColorPalette();
+  createModal.classList.remove('hidden');
+  setTimeout(() => document.getElementById('new-board-name').focus(), 300);
+});
+document.getElementById('close-create').addEventListener('click', () => createModal.classList.add('hidden'));
+createModal.addEventListener('click', e => { if (e.target === createModal) createModal.classList.add('hidden'); });
+
+document.getElementById('confirm-create').addEventListener('click', async () => {
+  const name = document.getElementById('new-board-name').value.trim();
+  if (!name) { showToast('Escribe un nombre para el tablero', 'error'); return; }
+  const btn = document.getElementById('confirm-create');
+  btn.disabled = true; btn.textContent = 'Creando…';
+  try {
+    await db.collection('users').doc(currentUser.uid).collection('boards').add({
+      title: name, background: selectedColor, createdAt: new Date()
+    });
+    createModal.classList.add('hidden');
+    showToast(`✅ "${name}" creado`);
+    loadBoards();
+  } catch (err) { showToast(err.message, 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Crear tablero'; }
+});
+
+/* ── SEARCH ────────────────────────────────────── */
+document.getElementById('search-toggle').addEventListener('click', () => {
+  searchBar.classList.toggle('hidden');
+  if (!searchBar.classList.contains('hidden')) searchInput.focus();
+  else { searchInput.value = ''; renderBoards(allBoards); }
+});
+document.getElementById('search-clear').addEventListener('click', () => {
+  searchInput.value = '';
+  searchBar.classList.add('hidden');
+  renderBoards(allBoards);
+});
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.toLowerCase().trim();
+  const filtered = q ? allBoards.filter(b => b.title.toLowerCase().includes(q)) : allBoards;
+  document.getElementById('boards-section-label').textContent = q ? `Resultados (${filtered.length})` : 'Tus tableros';
+  renderBoards(filtered);
+});
+
+/* ── NOTIFICATIONS ─────────────────────────────── */
+function loadNotifications() {
+  if (!currentUser) return;
+  db.collection('notifications').doc(currentUser.uid).collection('messages')
+    .orderBy('createdAt', 'desc').limit(20)
+    .onSnapshot(snap => {
+      let unread = 0;
+      const items = [];
+      snap.forEach(doc => {
+        const n = doc.data();
+        if (!n.read) unread++;
+        items.push({ id: doc.id, ...n });
+      });
+      notifBadge.textContent = unread;
+      notifBadge.style.display = unread > 0 ? 'flex' : 'none';
+      renderNotifications(items);
+    }, () => {
+      notifList.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:40px 0">Sin notificaciones</p>';
+    });
+}
+
+function renderNotifications(items) {
+  if (items.length === 0) {
+    notifList.innerHTML = `
+      <div class="empty-state">
+        <div class="emoji">🔔</div>
+        <h3>Sin notificaciones</h3>
+        <p>Aquí aparecerán tus invitaciones y actividad.</p>
+      </div>`;
+    return;
+  }
+  notifList.innerHTML = '';
+  items.forEach(n => {
+    const el = document.createElement('div');
+    el.className = 'notif-item' + (n.read ? '' : ' unread');
+    const icon = n.type === 'invite' ? '📩' : n.type === 'activity' ? '📋' : '🔔';
+    const time = n.createdAt?.toDate ? formatTime(n.createdAt.toDate()) : '';
+    el.innerHTML = `
+      <div class="notif-icon">${icon}</div>
+      <div class="notif-body">
+        <div class="notif-msg">${escHtml(n.message || '')}</div>
+        <div class="notif-time">${time}</div>
+        ${n.type === 'invite' && !n.read ? `
+          <div class="notif-actions">
+            <button class="notif-accept" data-id="${n.id}" data-board="${n.boardId}">Aceptar</button>
+            <button class="notif-reject" data-id="${n.id}">Rechazar</button>
+          </div>` : ''}
+      </div>`;
+    if (n.type !== 'invite' && !n.read) {
+      el.addEventListener('click', () => markRead(n.id));
     }
+    el.querySelector('.notif-accept')?.addEventListener('click', () => acceptInvite(n.boardId, n.id));
+    el.querySelector('.notif-reject')?.addEventListener('click', () => rejectInvite(n.id));
+    notifList.appendChild(el);
+  });
+}
 
-    window.createBoard = async () => {
-      const name = document.getElementById('new-board-name').value.trim();
-      const color = document.getElementById('new-board-color').value;
-      if (!name) {
-        showToast('Ingresa un nombre', 'error');
-        return;
-      }
-      try {
-        await db.collection('users').doc(currentUser.uid).collection('boards').add({
-          title: name,
-          background: color,
-          createdAt: new Date()
-        });
-        showToast('✅ Tablero creado');
-        loadBoards();
-      } catch (err) {
-        showToast(err.message, 'error');
-      }
-    };
+async function markRead(id) {
+  try {
+    await db.collection('notifications').doc(currentUser.uid).collection('messages').doc(id).update({ read: true });
+  } catch {}
+}
+async function acceptInvite(boardId, notifId) {
+  await markRead(notifId);
+  showToast('✅ Invitación aceptada');
+}
+async function rejectInvite(id) {
+  try {
+    await db.collection('notifications').doc(currentUser.uid).collection('messages').doc(id).delete();
+    showToast('Invitación rechazada');
+  } catch {}
+}
 
-    window.openBoard = (id) => {
-      localStorage.setItem('selectedBoardId', id);
-      localStorage.setItem('selectedUserId', currentUser.uid);
-      window.location.href = `board.html?id=${id}`;
-    };
+/* ── ACCOUNT TAB ───────────────────────────────── */
+function populateAccount(user) {
+  const initial = (user.displayName || user.email || '?')[0].toUpperCase();
+  document.getElementById('account-avatar').textContent = initial;
+  document.getElementById('account-name').textContent   = user.displayName || user.email.split('@')[0];
+  document.getElementById('account-email').textContent  = user.email;
+}
 
-    window.deleteBoard = async (id) => {
-      if (!confirm('¿Eliminar?')) return;
-      try {
-        await db.collection('users').doc(currentUser.uid).collection('boards').doc(id).delete();
-        showToast('✅ Eliminado');
-        loadBoards();
-      } catch (err) {
-        showToast(err.message, 'error');
-      }
-    };
+document.getElementById('logout-row').addEventListener('click', async () => {
+  try { await auth.signOut(); showToast('Sesión cerrada'); }
+  catch (err) { showToast(err.message, 'error'); }
+});
 
-    auth.onAuthStateChanged((user) => {
-      currentUser = user;
-      if (user) {
-        authContainer.classList.add('hidden');
-        appContainer.classList.remove('hidden');
-        userEmail.textContent = user.email;
-        loadBoards();
-      } else {
-        authContainer.classList.remove('hidden');
-        appContainer.classList.add('hidden');
+document.getElementById('export-row').addEventListener('click', exportData);
+
+document.getElementById('delete-row').addEventListener('click', async () => {
+  if (!confirm('⚠️ Esta acción eliminará tu cuenta y todos tus tableros permanentemente.')) return;
+  const confirm2 = prompt(`Confirma escribiendo tu email: ${currentUser.email}`);
+  if (confirm2 !== currentUser.email) { showToast('Email no coincide', 'error'); return; }
+  try {
+    await db.collection('users').doc(currentUser.uid).delete();
+    await firebase.auth().currentUser.delete();
+    showToast('Cuenta eliminada');
+  } catch (err) { showToast(err.message, 'error'); }
+});
+
+async function exportData() {
+  if (!currentUser) return;
+  showToast('Generando exportación…', 'info');
+  try {
+    const userDoc    = await db.collection('users').doc(currentUser.uid).get();
+    const boardsSnap = await db.collection('users').doc(currentUser.uid).collection('boards').get();
+    const boards     = [];
+    for (const bDoc of boardsSnap.docs) {
+      const b = bDoc.data(); b.id = bDoc.id;
+      const listsSnap = await bDoc.ref.collection('lists').get();
+      b.lists = [];
+      for (const lDoc of listsSnap.docs) {
+        const l = lDoc.data(); l.id = lDoc.id;
+        const cardsSnap = await lDoc.ref.collection('cards').get();
+        l.cards = cardsSnap.docs.map(c => ({ id: c.id, ...c.data() }));
+        b.lists.push(l);
       }
-    });
-  </script>
+      boards.push(b);
+    }
+    const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), user: userDoc.data(), boards }, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `taskflow-export-${Date.now()}.json`;
+    a.click();
+    showToast('✅ Datos descargados');
+  } catch (err) { showToast(err.message, 'error'); }
+}
+
+/* ── BOTTOM NAV ────────────────────────────────── */
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(tab).classList.add('active');
+    const labels = { 'tab-boards': 'Tableros', 'tab-notifications': 'Actividad', 'tab-account': 'Cuenta' };
+    headerTitle.textContent = labels[tab] || 'TaskFlow';
+    if (tab !== 'tab-boards') { searchBar.classList.add('hidden'); searchInput.value = ''; }
+  });
+});
+
+/* ── HELPERS ───────────────────────────────────── */
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function formatTime(date) {
+  const diff = Date.now() - date;
+  const m = Math.floor(diff / 60000), h = Math.floor(diff / 3600000), d = Math.floor(diff / 86400000);
+  if (m < 1)  return 'Ahora';
+  if (m < 60) return `${m}m`;
+  if (h < 24) return `${h}h`;
+  if (d < 7)  return `${d}d`;
+  return date.toLocaleDateString('es-ES');
+}
+</script>
 </body>
 </html>
