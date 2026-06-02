@@ -16,7 +16,8 @@
       --bg:#0A0A0A; --s1:#111111; --s2:#1A1A1A; --s3:#222222; --s4:#2A2A2A;
       --border:rgba(201,168,76,.18); --border-s:rgba(201,168,76,.1);
       --text:#F0EDE6; --text-m:rgba(240,237,230,.65); --text-d:rgba(240,237,230,.35);
-      --board-nav-h: 58px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --board-nav-h: calc(58px + env(safe-area-inset-top, 0px));
     }
     body { overflow:hidden; background:var(--bg); color:var(--text); }
 
@@ -26,7 +27,7 @@
       height:var(--board-nav-h);
       background:rgba(10,10,10,.85); backdrop-filter:blur(14px) saturate(1.4);
       -webkit-backdrop-filter:blur(14px) saturate(1.4);
-      padding:0 14px;
+      padding: calc(env(safe-area-inset-top, 0px) + 10px) 14px 10px;
       display:flex; align-items:center; gap:10px;
       border-bottom:1px solid var(--border);
     }
