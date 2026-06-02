@@ -5,6 +5,7 @@ const PRECACHE = [
   '/board.html',
   '/calendar.html',
   '/reports.html',
+  '/admin.html',
   '/css/style.css',
   '/js/firebase-config.js',
   '/js/board.js',
@@ -12,6 +13,7 @@ const PRECACHE = [
   '/js/notifications.js',
   '/js/auth.js',
   '/js/boards.js',
+  '/js/workspace.js',
   '/logo.svg',
   '/manifest.json',
 ];
