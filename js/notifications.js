@@ -47,14 +47,31 @@ const NotificationsModule = (() => {
           const icon = getActivityIcon(activity.type);
           const action = getActivityText(activity.type, activity.target);
 
-          actEl.innerHTML = `
-            <span class="activity-icon">${icon}</span>
-            <div class="activity-details">
-              <span class="activity-user">${activity.by}</span>
-              <span class="activity-action">${action}</span>
-              <span class="activity-time">${formatActivityTime(activity.timestamp)}</span>
-            </div>
-          `;
+          // Build using textContent to prevent XSS from Firestore data
+          const iconSpan = document.createElement('span');
+          iconSpan.className = 'activity-icon';
+          iconSpan.textContent = icon;
+
+          const userSpan = document.createElement('span');
+          userSpan.className = 'activity-user';
+          userSpan.textContent = activity.by || '';
+
+          const actionSpan = document.createElement('span');
+          actionSpan.className = 'activity-action';
+          actionSpan.textContent = action;
+
+          const timeSpan = document.createElement('span');
+          timeSpan.className = 'activity-time';
+          timeSpan.textContent = formatActivityTime(activity.timestamp);
+
+          const details = document.createElement('div');
+          details.className = 'activity-details';
+          details.appendChild(userSpan);
+          details.appendChild(actionSpan);
+          details.appendChild(timeSpan);
+
+          actEl.appendChild(iconSpan);
+          actEl.appendChild(details);
 
           activityFeed.appendChild(actEl);
         });
@@ -107,9 +124,10 @@ const NotificationsModule = (() => {
     if (!boardId || !window.currentUser) return;
 
     try {
+      const uid = window.boardOwnerUid || window.currentUser.uid;
       await db
         .collection("users")
-        .doc(window.currentUser.uid)
+        .doc(uid)
         .collection("boards")
         .doc(boardId)
         .collection("activity")

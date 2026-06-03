@@ -4,25 +4,34 @@
 
 const BoardModule = (() => {
   let boardId;
+  let ownerUid;  // may differ from currentUser when viewing a shared board
   let boardData = { lists: {} };
   let draggedCard = null;
 
+  function escHtml(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
   function init() {
     const params = new URLSearchParams(location.search);
-    boardId = params.get("id") || localStorage.getItem("selectedBoardId");
+    boardId  = params.get("id") || localStorage.getItem("selectedBoardId");
+    ownerUid = params.get("owner") || window.currentUser.uid;
 
     if (!boardId || !window.currentUser) {
       location.href = "index.html";
       return;
     }
 
+    // Expose owner so logActivity writes to the correct board
+    window.boardOwnerUid = ownerUid;
+
     if (window.AutomationEngine) {
-      window.AutomationEngine.init(boardId, window.currentUser.uid, () => boardData);
+      window.AutomationEngine.init(boardId, ownerUid, () => boardData);
     }
 
     const boardRef = db
       .collection("users")
-      .doc(window.currentUser.uid)
+      .doc(ownerUid)
       .collection("boards")
       .doc(boardId);
 
@@ -126,7 +135,7 @@ const BoardModule = (() => {
       .map(
         (card) => `
       <div class="card" draggable="true" data-card-id="${card.id}" data-list-id="${list.id}">
-        <div class="card-content">${card.title}</div>
+        <div class="card-content">${escHtml(card.title)}</div>
         <button class="card-auto-btn" title="Automatizaciones">⚡</button>
         <button class="card-delete" title="Eliminar">✕</button>
       </div>
@@ -308,7 +317,7 @@ const BoardModule = (() => {
     try {
       const listsRef = db
         .collection("users")
-        .doc(window.currentUser.uid)
+        .doc(ownerUid)
         .collection("boards")
         .doc(boardId)
         .collection("lists");
@@ -336,7 +345,7 @@ const BoardModule = (() => {
     try {
       await db
         .collection("users")
-        .doc(window.currentUser.uid)
+        .doc(ownerUid)
         .collection("boards")
         .doc(boardId)
         .collection("lists")
@@ -353,7 +362,7 @@ const BoardModule = (() => {
     try {
       const cardsRef = db
         .collection("users")
-        .doc(window.currentUser.uid)
+        .doc(ownerUid)
         .collection("boards")
         .doc(boardId)
         .collection("lists")
@@ -361,6 +370,7 @@ const BoardModule = (() => {
         .collection("cards");
 
       const list = boardData.lists[listId];
+      if (!list) return;
       const position = (list.cards[list.cards.length - 1]?.position || 0) + 65536;
 
       const cardCreatedAt = new Date();
@@ -387,7 +397,7 @@ const BoardModule = (() => {
     try {
       await db
         .collection("users")
-        .doc(window.currentUser.uid)
+        .doc(ownerUid)
         .collection("boards")
         .doc(boardId)
         .collection("lists")
@@ -404,11 +414,12 @@ const BoardModule = (() => {
     if (!window.currentUser || !boardId) return;
 
     try {
-      const userRef = db.collection("users").doc(window.currentUser.uid);
-      const boardRef = userRef.collection("boards").doc(boardId);
+      const boardRef = db.collection("users").doc(ownerUid).collection("boards").doc(boardId);
 
       // Obtener posición en la lista destino
-      const targetCards = boardData.lists[targetListId].cards;
+      const targetList = boardData.lists[targetListId];
+      if (!targetList) return;
+      const targetCards = targetList.cards;
       const position = (targetCards[targetCards.length - 1]?.position || 0) + 65536;
 
       // Obtener la tarjeta

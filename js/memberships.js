@@ -1,222 +1,179 @@
 // ═══════════════════════════════════════════════════════════════════
 // MEMBERSHIPS · Compartir tableros, invitaciones, permisos
 // ═══════════════════════════════════════════════════════════════════
-// Estructura:
-// users/{userId}/boards/{boardId}/members/{memberId}
-//   - userId: string (quién es miembro)
-//   - email: string (del usuario para invitarlo)
-//   - role: "owner" | "editor" | "viewer"
-//   - joinedAt: timestamp
-//
-// notifications/{userId}/{notificationId}
-//   - type: "invite" | "removed" | "activity"
-//   - fromUser: string (nombre de quién activa)
-//   - boardId: string
-//   - boardName: string
-//   - message: string
-//   - read: boolean
-//   - createdAt: timestamp
 
 const MembershipsModule = window.MembershipsModule = (() => {
-  const membersList = document.getElementById("members-list");
-  const inviteBtn = document.getElementById("invite-member-btn");
-  const notificationBell = document.getElementById("notification-bell");
-  const notificationPanel = document.getElementById("notification-panel");
-  const notificationsList = document.getElementById("notifications-list");
+  const membersList    = document.getElementById("members-list");
+  const inviteBtn      = document.getElementById("invite-member-btn");
+  const notifBell      = document.getElementById("notification-bell");
+  const notifPanel     = document.getElementById("notification-panel");
+  const notifList      = document.getElementById("notifications-list");
 
   let boardId;
   let currentBoard;
   let unreadCount = 0;
+  let unsubNotif = null;
 
-  // Inicializar
+  // ── Init callback ───────────────────────────────────────────────
   window.onBoardLoaded = (board, bId) => {
     boardId = bId;
     currentBoard = board;
     loadMembers();
-    loadNotifications();
     setupNotificationBell();
   };
 
-  // ─── NOTIFICACIONES ─────────────────────────────────────────
+  // ── Helpers ─────────────────────────────────────────────────────
+  function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function buildJoinUrl() {
+    const base = window.location.href.replace(/board\.html.*$/, '');
+    return `${base}board.html?id=${boardId}&owner=${window.currentUser.uid}`;
+  }
+
+  function fmtTime(ts) {
+    if (!ts) return 'Ahora';
+    try {
+      const date = ts.toDate ? ts.toDate() : new Date(ts);
+      const diff = Date.now() - date;
+      const m = Math.floor(diff / 60000);
+      if (m < 1) return 'Ahora';
+      if (m < 60) return `${m}m`;
+      const h = Math.floor(m / 60);
+      if (h < 24) return `${h}h`;
+      return `${Math.floor(h / 24)}d`;
+    } catch { return ''; }
+  }
+
+  // ── Notification bell ────────────────────────────────────────────
   function setupNotificationBell() {
-    if (!notificationBell || !window.currentUser) return;
+    if (!notifBell || !window.currentUser) return;
+    if (unsubNotif) unsubNotif();
 
-    // Escuchar notificaciones en tiempo real
-    db.collection("notifications")
+    unsubNotif = db.collection('notifications')
       .doc(window.currentUser.uid)
-      .collection("messages")
-      .orderBy("createdAt", "desc")
-      .limit(10)
-      .onSnapshot((snap) => {
+      .collection('messages')
+      .orderBy('createdAt', 'desc')
+      .limit(15)
+      .onSnapshot(snap => {
         unreadCount = 0;
-        notificationsList.innerHTML = "";
+        if (notifList) notifList.innerHTML = '';
 
-        snap.forEach((doc) => {
-          const notif = doc.data();
-          const notifId = doc.id;
-
+        snap.forEach(doc => {
+          const notif = { id: doc.id, ...doc.data() };
           if (!notif.read) unreadCount++;
-
-          const notifEl = document.createElement("div");
-          notifEl.className = `notification-item ${notif.read ? "" : "unread"}`;
-          notifEl.innerHTML = `
-            <div class="notification-content">
-              <div class="notification-message">${notif.message}</div>
-              <div class="notification-time">${formatTime(notif.createdAt)}</div>
-            </div>
-            ${!notif.read ? '<div class="notification-dot"></div>' : ""}
-          `;
-
-          // Click en notificación invita
-          if (notif.type === "invite" && !notif.read) {
-            const acceptBtn = document.createElement("button");
-            acceptBtn.className = "notification-action accept";
-            acceptBtn.textContent = "Aceptar";
-            acceptBtn.addEventListener("click", () => {
-              acceptInvite(notif.boardId, notifId);
-            });
-
-            const rejectBtn = document.createElement("button");
-            rejectBtn.className = "notification-action reject";
-            rejectBtn.textContent = "Rechazar";
-            rejectBtn.addEventListener("click", () => {
-              rejectInvite(notifId);
-            });
-
-            notifEl.appendChild(acceptBtn);
-            notifEl.appendChild(rejectBtn);
-          } else {
-            // Click para marcar como leído
-            notifEl.addEventListener("click", () => {
-              markAsRead(notifId);
-            });
-          }
-
-          notificationsList.appendChild(notifEl);
+          renderNotifItem(notif);
         });
 
-        updateNotificationBadge();
-      });
+        updateBadge();
+      }, err => console.warn('notifications listener:', err));
   }
 
-  function updateNotificationBadge() {
-    const badge = notificationBell?.querySelector(".notification-badge");
+  function renderNotifItem(notif) {
+    if (!notifList) return;
+    const el = document.createElement('div');
+    el.className = `notification-item${notif.read ? '' : ' unread'}`;
+
+    el.innerHTML = `
+      <div class="notification-content">
+        <div class="notification-message">${esc(notif.message || '')}</div>
+        <div class="notification-time">${fmtTime(notif.createdAt)}</div>
+      </div>
+      ${!notif.read ? '<div class="notification-dot"></div>' : ''}
+    `;
+
+    if (notif.type === 'invite' && !notif.read) {
+      const acceptBtn = document.createElement('button');
+      acceptBtn.className = 'notification-action accept';
+      acceptBtn.textContent = 'Aceptar';
+      acceptBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        acceptInvite(notif);
+      });
+
+      const rejectBtn = document.createElement('button');
+      rejectBtn.className = 'notification-action reject';
+      rejectBtn.textContent = 'Rechazar';
+      rejectBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        rejectInvite(notif.id);
+      });
+
+      el.appendChild(acceptBtn);
+      el.appendChild(rejectBtn);
+    } else {
+      el.addEventListener('click', () => markAsRead(notif.id));
+    }
+
+    notifList.appendChild(el);
+  }
+
+  function updateBadge() {
+    const badge = notifBell?.querySelector('.notification-badge');
     if (badge) {
       badge.textContent = unreadCount;
-      badge.style.display = unreadCount > 0 ? "block" : "none";
+      badge.style.display = unreadCount > 0 ? 'flex' : 'none';
     }
   }
 
-  function loadNotifications() {
+  async function markAsRead(id) {
     if (!window.currentUser) return;
-
-    const userRef = db.collection("notifications").doc(window.currentUser.uid);
-
-    userRef.onSnapshot((doc) => {
-      if (doc.exists) {
-        const data = doc.data();
-        console.log("Notificaciones del usuario:", data);
-      }
-    });
-  }
-
-  async function markAsRead(notificationId) {
-    if (!window.currentUser) return;
-
     try {
-      await db
-        .collection("notifications")
-        .doc(window.currentUser.uid)
-        .collection("messages")
-        .doc(notificationId)
-        .update({ read: true });
-    } catch (error) {
-      console.error("Error marcando notificación:", error);
-    }
+      await db.collection('notifications').doc(window.currentUser.uid)
+        .collection('messages').doc(id).update({ read: true });
+    } catch(e) { console.warn('markAsRead:', e); }
   }
 
-  // ─── MEMBRESÍAS ────────────────────────────────────────────
-
+  // ── Members list ─────────────────────────────────────────────────
   function loadMembers() {
-    if (!boardId || !window.currentUser) return;
+    if (!boardId || !window.currentUser || !membersList) return;
 
-    const membersRef = db
-      .collection("users")
-      .doc(window.currentUser.uid)
-      .collection("boards")
-      .doc(boardId)
-      .collection("members");
-
-    if (!membersList) return;
-
-    membersRef.onSnapshot((snap) => {
-      membersList.innerHTML = "";
-
-      snap.forEach((doc) => {
-        const member = doc.data();
-        renderMemberItem(member, doc.id);
-      });
-    });
+    db.collection('users').doc(window.currentUser.uid)
+      .collection('boards').doc(boardId).collection('members')
+      .onSnapshot(snap => {
+        membersList.innerHTML = '';
+        snap.forEach(doc => renderMemberItem(doc.data(), doc.id));
+      }, err => console.warn('members listener:', err));
   }
 
   function renderMemberItem(member, memberId) {
-    const item = document.createElement("div");
-    item.className = "member-item";
-
-    const initials = member.email
-      .split("@")[0]
-      .slice(0, 2)
-      .toUpperCase();
+    const item = document.createElement('div');
+    item.className = 'member-item';
+    const initials = (member.email || '?').split('@')[0].slice(0, 2).toUpperCase();
+    const statusLabel = member.status === 'pending' ? ' <span style="font-size:10px;color:var(--gold)">· pendiente</span>' : '';
 
     item.innerHTML = `
       <div class="member-avatar">${initials}</div>
       <div class="member-info">
-        <div class="member-email">${member.email}</div>
-        <div class="member-role">${member.role}</div>
+        <div class="member-email">${esc(member.email)}</div>
+        <div class="member-role">${esc(member.role)}${statusLabel}</div>
       </div>
       <div class="member-actions">
         <select class="member-role-select" data-member-id="${memberId}">
-          <option value="viewer" ${member.role === "viewer" ? "selected" : ""}>
-            Visor
-          </option>
-          <option value="editor" ${member.role === "editor" ? "selected" : ""}>
-            Editor
-          </option>
-          <option value="owner" ${member.role === "owner" ? "selected" : ""}>
-            Propietario
-          </option>
+          <option value="viewer"  ${member.role==='viewer'?'selected':''}>Visor</option>
+          <option value="editor"  ${member.role==='editor'?'selected':''}>Editor</option>
+          <option value="owner"   ${member.role==='owner'?'selected':''}>Propietario</option>
         </select>
-        <button class="member-remove" data-member-id="${memberId}" title="Eliminar">
-          ✕
-        </button>
+        <button class="member-remove" data-member-id="${memberId}" title="Eliminar">✕</button>
       </div>
     `;
 
-    const select = item.querySelector(".member-role-select");
-    const removeBtn = item.querySelector(".member-remove");
-
-    select.addEventListener("change", () => {
-      updateMemberRole(memberId, select.value);
-    });
-
-    removeBtn.addEventListener("click", () => {
-      if (confirm(`¿Eliminar a ${member.email}?`)) {
-        removeMember(memberId, member.email);
-      }
+    item.querySelector('.member-role-select').addEventListener('change', e =>
+      updateMemberRole(memberId, e.target.value));
+    item.querySelector('.member-remove').addEventListener('click', () => {
+      if (confirm(`¿Eliminar a ${member.email}?`)) removeMember(memberId, member.email);
     });
 
     membersList.appendChild(item);
   }
 
-  // ─── INVITACIONES ──────────────────────────────────────────
-
-  if (inviteBtn) {
-    inviteBtn.addEventListener("click", showInviteModal);
-  }
+  // ── Invite modal ─────────────────────────────────────────────────
+  if (inviteBtn) inviteBtn.addEventListener('click', showInviteModal);
 
   function showInviteModal() {
-    const modal = document.createElement("div");
-    modal.className = "modal-overlay";
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
     modal.innerHTML = `
       <div class="modal-content">
         <div class="modal-header">
@@ -224,252 +181,182 @@ const MembershipsModule = window.MembershipsModule = (() => {
           <button class="modal-close" aria-label="Cerrar">✕</button>
         </div>
         <div class="modal-body">
-          <input
-            type="email"
-            id="invite-email"
-            placeholder="email@ejemplo.com"
-            class="invite-input"
-          />
+          <input type="email" id="invite-email" placeholder="email@ejemplo.com" class="invite-input" />
           <select id="invite-role" class="invite-role">
             <option value="viewer">Visor (solo lectura)</option>
             <option value="editor" selected>Editor</option>
           </select>
         </div>
-        <div class="modal-footer">
+        <div class="modal-footer" style="flex-wrap:wrap;gap:8px;">
           <button class="btn-cancel">Cancelar</button>
-          <button class="btn-whatsapp">📱 WhatsApp</button>
-          <button class="btn-send">Enviar invitación</button>
+          <button class="btn-whatsapp" style="background:#25D366;color:#fff;border:none;padding:9px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;">📱 WhatsApp</button>
+          <button class="btn-email"    style="background:#1565C0;color:#fff;border:none;padding:9px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;">✉️ Email</button>
+          <button class="btn-send">Enviar</button>
         </div>
       </div>
     `;
 
-    const closeBtn = modal.querySelector(".modal-close");
-    const cancelBtn = modal.querySelector(".btn-cancel");
-    const sendBtn = modal.querySelector(".btn-send");
-    const waBtn = modal.querySelector(".btn-whatsapp");
-    const emailInput = modal.querySelector("#invite-email");
-    const roleSelect = modal.querySelector("#invite-role");
-
     const close = () => modal.remove();
+    modal.querySelector('.modal-close').addEventListener('click', close);
+    modal.querySelector('.btn-cancel').addEventListener('click', close);
+    modal.addEventListener('click', e => { if (e.target === modal) close(); });
 
-    closeBtn.addEventListener("click", close);
-    cancelBtn.addEventListener("click", close);
+    const emailInput = modal.querySelector('#invite-email');
+    const roleSelect = modal.querySelector('#invite-role');
 
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) close();
+    // ── WhatsApp ────────────────────────────────────────────────
+    modal.querySelector('.btn-whatsapp').addEventListener('click', () => {
+      const joinUrl  = buildJoinUrl();
+      const board    = currentBoard?.title || 'un tablero';
+      const from     = window.currentUser?.email || 'alguien';
+      const text = `¡Hola! 👋 *${from}* te invita a colaborar en el tablero *"${board}"* en *TaskFlow*.\n\nUsa este enlace para unirte directamente:\n${joinUrl}\n\n_(Necesitarás una cuenta en TaskFlow)_`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
     });
 
-    sendBtn.addEventListener("click", () => {
+    // ── Email ───────────────────────────────────────────────────
+    modal.querySelector('.btn-email').addEventListener('click', () => {
+      const to       = emailInput.value.trim();
+      const joinUrl  = buildJoinUrl();
+      const board    = currentBoard?.title || 'un tablero';
+      const from     = window.currentUser?.email || 'alguien';
+      const subject  = encodeURIComponent(`Invitación a "${board}" en TaskFlow`);
+      const body     = encodeURIComponent(
+        `¡Hola!\n\n${from} te invitó a colaborar en el tablero "${board}" en TaskFlow.\n\nHaz clic en el siguiente enlace para unirte:\n${joinUrl}\n\nNecesitarás una cuenta en TaskFlow (registro gratuito).\n\n¡Nos vemos en el tablero!`
+      );
+      window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+    });
+
+    // ── Enviar invitación in-app ────────────────────────────────
+    modal.querySelector('.btn-send').addEventListener('click', () => {
       const email = emailInput.value.trim().toLowerCase();
-      const role = roleSelect.value;
-
-      if (!email) {
-        window.showToast("Escribe un email", "error");
-        return;
-      }
-
+      const role  = roleSelect.value;
+      if (!email) { window.showToast('Escribe un email', 'error'); return; }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        window.showToast("Email inválido", "error");
-        return;
+        window.showToast('Email inválido', 'error'); return;
       }
-
       sendInvitation(email, role);
       close();
-    });
-
-    waBtn.addEventListener("click", () => {
-      const boardName = currentBoard ? currentBoard.title : "un tablero";
-      const from = window.currentUser ? window.currentUser.email : "alguien";
-      const text = `¡Hola! ${from} te invita a colaborar en el tablero *"${boardName}"* en TaskFlow. Inicia sesión en la app para aceptar la invitación.`;
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
     });
 
     document.body.appendChild(modal);
     emailInput.focus();
   }
 
+  // ── Send invitation ──────────────────────────────────────────────
   async function sendInvitation(email, role) {
     if (!boardId || !window.currentUser || !currentBoard) return;
 
     try {
-      // 1. Buscar al usuario por email
-      const usersSnap = await db
-        .collection("users")
-        .where("email", "==", email)
-        .get();
-
+      const usersSnap = await db.collection('users').where('email', '==', email).get();
       if (usersSnap.empty) {
-        window.showToast("Usuario no encontrado", "error");
+        window.showToast('Usuario no encontrado en TaskFlow', 'error');
         return;
       }
 
-      const targetUserId = usersSnap.docs[0].id;
-      const targetUserData = usersSnap.docs[0].data();
+      const targetUserId   = usersSnap.docs[0].id;
+      const ownerUid       = window.currentUser.uid;
 
-      // 2. Agregar como miembro pendiente en el tablero
-      await db
-        .collection("users")
-        .doc(window.currentUser.uid)
-        .collection("boards")
-        .doc(boardId)
-        .collection("members")
-        .doc(targetUserId)
+      // Register as pending member
+      await db.collection('users').doc(ownerUid)
+        .collection('boards').doc(boardId)
+        .collection('members').doc(targetUserId)
         .set({
-          userId: targetUserId,
-          email: email,
-          role: role,
-          status: "pending", // Pendiente de aceptar
+          userId:    targetUserId,
+          email,
+          role,
+          status:    'pending',
           invitedBy: window.currentUser.email,
           invitedAt: new Date(),
         });
 
-      // 3. Enviar notificación
-      await sendNotification(
-        targetUserId,
-        "invite",
+      // Send notification with full join context
+      await sendNotification(targetUserId, 'invite',
         `${window.currentUser.email} te invitó a "${currentBoard.title}"`,
         {
-          boardId: boardId,
+          boardId,
           boardName: currentBoard.title,
+          ownerUid,                          // ← clave para aceptar luego
           invitedBy: window.currentUser.email,
+          joinUrl:   buildJoinUrl(),
         }
       );
 
-      window.showToast(`Invitación enviada a ${email}`);
+      window.showToast(`✅ Invitación enviada a ${email}`);
     } catch (error) {
       window.showError(error);
     }
   }
 
-  async function acceptInvite(boardId, notificationId) {
+  // ── Accept / reject ──────────────────────────────────────────────
+  async function acceptInvite(notif) {
     if (!window.currentUser) return;
 
     try {
-      // Marcar notificación como leída
-      await db
-        .collection("notifications")
-        .doc(window.currentUser.uid)
-        .collection("messages")
-        .doc(notificationId)
-        .update({ read: true });
+      await markAsRead(notif.id);
 
-      // El tablero ya está en la colección de miembros
-      // Solo necesitamos cambiar el status a "active"
-      // (Nota: en una app real, buscarías el tablero en la invitación)
+      // Change member status to active on owner's board
+      if (notif.boardId && notif.ownerUid) {
+        await db.collection('users').doc(notif.ownerUid)
+          .collection('boards').doc(notif.boardId)
+          .collection('members').doc(window.currentUser.uid)
+          .update({ status: 'active', joinedAt: new Date() });
+      }
 
-      window.showToast("Invitación aceptada");
+      window.showToast('✅ Invitación aceptada');
 
-      // Recargar tableros
-      if (window.BoardsModule && window.BoardsModule.loadBoards) {
-        window.BoardsModule.loadBoards();
+      // Navigate to the shared board
+      if (notif.boardId && notif.ownerUid) {
+        const base = window.location.href.replace(/[^/]*$/, '');
+        location.href = `${base}board.html?id=${notif.boardId}&owner=${notif.ownerUid}`;
       }
     } catch (error) {
       window.showError(error);
     }
   }
 
-  async function rejectInvite(notificationId) {
+  async function rejectInvite(notifId) {
     if (!window.currentUser) return;
-
     try {
-      await db
-        .collection("notifications")
-        .doc(window.currentUser.uid)
-        .collection("messages")
-        .doc(notificationId)
-        .delete();
-
-      window.showToast("Invitación rechazada");
-    } catch (error) {
-      window.showError(error);
-    }
+      await db.collection('notifications').doc(window.currentUser.uid)
+        .collection('messages').doc(notifId).delete();
+      window.showToast('Invitación rechazada');
+    } catch (error) { window.showError(error); }
   }
 
+  // ── Member management ────────────────────────────────────────────
   async function updateMemberRole(memberId, newRole) {
     if (!boardId || !window.currentUser) return;
-
     try {
-      await db
-        .collection("users")
-        .doc(window.currentUser.uid)
-        .collection("boards")
-        .doc(boardId)
-        .collection("members")
-        .doc(memberId)
+      await db.collection('users').doc(window.currentUser.uid)
+        .collection('boards').doc(boardId)
+        .collection('members').doc(memberId)
         .update({ role: newRole });
-
-      window.showToast("Rol actualizado");
-    } catch (error) {
-      window.showError(error);
-    }
+      window.showToast('Rol actualizado');
+    } catch(e) { window.showError(e); }
   }
 
   async function removeMember(memberId, memberEmail) {
     if (!boardId || !window.currentUser) return;
-
     try {
-      await db
-        .collection("users")
-        .doc(window.currentUser.uid)
-        .collection("boards")
-        .doc(boardId)
-        .collection("members")
-        .doc(memberId)
-        .delete();
+      await db.collection('users').doc(window.currentUser.uid)
+        .collection('boards').doc(boardId)
+        .collection('members').doc(memberId).delete();
 
-      // Notificar al usuario que fue removido
-      await sendNotification(
-        memberId,
-        "activity",
-        `Fuiste removido de un tablero por ${window.currentUser.email}`,
-        {}
-      );
+      await sendNotification(memberId, 'activity',
+        `Fuiste removido del tablero "${currentBoard?.title || ''}" por ${window.currentUser.email}`, {});
 
       window.showToast(`${memberEmail} removido`);
-    } catch (error) {
-      window.showError(error);
-    }
+    } catch(e) { window.showError(e); }
   }
 
-  // ─── HELPER: Enviar notificación ────────────────────────
-
+  // ── Notification helper ──────────────────────────────────────────
   async function sendNotification(userId, type, message, metadata = {}) {
     try {
-      await db
-        .collection("notifications")
-        .doc(userId)
-        .collection("messages")
-        .add({
-          type: type, // "invite", "activity", "mention"
-          message: message,
-          read: false,
-          createdAt: new Date(),
-          ...metadata,
-        });
-    } catch (error) {
-      console.error("Error enviando notificación:", error);
-    }
+      await db.collection('notifications').doc(userId).collection('messages').add({
+        type, message, read: false, createdAt: new Date(), ...metadata,
+      });
+    } catch (error) { console.warn('sendNotification failed:', error); }
   }
 
-  // Helper: formatear tiempo
-  function formatTime(timestamp) {
-    if (!timestamp) return "Ahora";
-    const date = new Date(timestamp.toDate());
-    const now = new Date();
-    const diff = now - date;
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    if (minutes < 1) return "Ahora";
-    if (minutes < 60) return `${minutes}m`;
-    if (hours < 24) return `${hours}h`;
-    if (days < 7) return `${days}d`;
-    return date.toLocaleDateString("es-ES");
-  }
-
-  return {
-    sendNotification,
-    updateMembers: loadMembers,
-  };
+  return { sendNotification, updateMembers: loadMembers };
 })();

@@ -897,7 +897,7 @@ function renderNotif(items){
           <button class="notif-reject" data-id="${n.id}">Rechazar</button>
         </div>`:''}
       </div>`;
-    el.querySelector('[data-id].notif-accept')?.addEventListener('click',()=>markRead(n.id).then(()=>showToast('✅ Invitación aceptada')));
+    el.querySelector('[data-id].notif-accept')?.addEventListener('click',()=>acceptInvite(n));
     el.querySelector('[data-id].notif-reject')?.addEventListener('click',()=>rejectN(n.id));
     if(!n.read)el.addEventListener('click',e=>{if(!e.target.closest('button'))markRead(n.id)});
     c.appendChild(el);
@@ -905,6 +905,19 @@ function renderNotif(items){
 }
 async function markRead(id){try{await db.collection('notifications').doc(currentUser.uid).collection('messages').doc(id).update({read:true})}catch{}}
 async function rejectN(id){try{await db.collection('notifications').doc(currentUser.uid).collection('messages').doc(id).delete();showToast('Rechazada')}catch{}}
+async function acceptInvite(n){
+  try{
+    await markRead(n.id);
+    if(n.boardId&&n.ownerUid){
+      await db.collection('users').doc(n.ownerUid).collection('boards').doc(n.boardId)
+        .collection('members').doc(currentUser.uid).update({status:'active',joinedAt:new Date()});
+    }
+    showToast('✅ Invitación aceptada');
+    if(n.boardId&&n.ownerUid){
+      setTimeout(()=>{location.href=`board.html?id=${n.boardId}&owner=${n.ownerUid}`;},800);
+    }
+  }catch(e){showToast('Error al aceptar','error');console.error(e);}
+}
 
 /* ── ACCOUNT ──────────────────────────────── */
 let profileData={};

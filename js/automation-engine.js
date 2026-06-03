@@ -81,7 +81,9 @@ window.AutomationEngine = (() => {
           case 'move_to_top': {
             const bd = _getBoardData?.() || {};
             const cards = bd.lists?.[listId]?.cards || [];
-            const minPos = cards.reduce((m, c) => Math.min(m, c.position || 65536), 65536);
+            const minPos = cards.length
+              ? cards.reduce((m, c) => Math.min(m, c.position || 65536), cards[0].position || 65536)
+              : 65536;
             await boardRef.collection('lists').doc(listId)
               .collection('cards').doc(cardId).update({ position: Math.max(1, minPos - 65536) });
             break;
