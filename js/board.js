@@ -16,6 +16,10 @@ const BoardModule = (() => {
       return;
     }
 
+    if (window.AutomationEngine) {
+      window.AutomationEngine.init(boardId, window.currentUser.uid, () => boardData);
+    }
+
     const boardRef = db
       .collection("users")
       .doc(window.currentUser.uid)
@@ -123,6 +127,7 @@ const BoardModule = (() => {
         (card) => `
       <div class="card" draggable="true" data-card-id="${card.id}" data-list-id="${list.id}">
         <div class="card-content">${card.title}</div>
+        <button class="card-auto-btn" title="Automatizaciones">⚡</button>
         <button class="card-delete" title="Eliminar">✕</button>
       </div>
     `
@@ -194,6 +199,12 @@ const BoardModule = (() => {
 
       cardEl.addEventListener("dragend", () => {
         cardEl.classList.remove("dragging");
+      });
+
+      cardEl.querySelector(".card-auto-btn")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const cardData = list.cards.find(c => c.id === cardEl.dataset.cardId);
+        showCardAutoPopup(cardEl, cardEl.dataset.cardId, list.id, cardData);
       });
 
       cardEl
@@ -352,14 +363,18 @@ const BoardModule = (() => {
       const list = boardData.lists[listId];
       const position = (list.cards[list.cards.length - 1]?.position || 0) + 65536;
 
-      await cardsRef.add({
+      const cardCreatedAt = new Date();
+      const docRef = await cardsRef.add({
         title,
         position,
-        createdAt: new Date(),
+        createdAt: cardCreatedAt,
       });
 
       // Registrar actividad
       if (window.logActivity) window.logActivity("card_created", title);
+      if (window.AutomationEngine) {
+        window.AutomationEngine.onCardCreated(docRef.id, { title, position, createdAt: cardCreatedAt }, listId);
+      }
     } catch (error) {
       window.showError(error);
     }
@@ -431,14 +446,47 @@ const BoardModule = (() => {
 
       // Registrar actividad
       if (window.logActivity) window.logActivity("card_moved", cardData.title);
+      if (sourceListId !== targetListId && window.AutomationEngine) {
+        window.AutomationEngine.onCardMoved(cardId, cardData, targetListId);
+      }
     } catch (error) {
       window.showError(error);
     }
   }
 
+  function showCardAutoPopup(cardEl, cardId, listId, card) {
+    document.querySelectorAll(".card-auto-popup").forEach(p => p.remove());
+    const btns = window.AutomationEngine?.getCardButtons() || [];
+    if (!btns.length) return;
+    const popup = document.createElement("div");
+    popup.className = "card-auto-popup";
+    btns.forEach(b => {
+      const btn = document.createElement("button");
+      btn.className = "card-auto-popup-btn";
+      btn.textContent = `${b.icon || "⚡"} ${b.name || "Sin nombre"}`;
+      btn.addEventListener("click", async () => {
+        popup.remove();
+        await window.AutomationEngine?.runCardButton(b.id, cardId, listId, card);
+      });
+      popup.appendChild(btn);
+    });
+    document.body.appendChild(popup);
+    const rect = cardEl.getBoundingClientRect();
+    popup.style.top = `${rect.bottom + 4}px`;
+    popup.style.left = `${Math.min(rect.left, window.innerWidth - 170)}px`;
+    setTimeout(() => {
+      document.addEventListener("click", () => popup.remove(), { once: true });
+    }, 10);
+  }
+
   // Back button
   document.getElementById("back-btn").addEventListener("click", () => {
     location.href = "index.html";
+  });
+
+  // Automation button
+  document.getElementById("automation-btn")?.addEventListener("click", () => {
+    location.href = `automation.html${boardId ? "?id=" + boardId : ""}`;
   });
 
   // Members button
