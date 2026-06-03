@@ -1,21 +1,16 @@
 /* TaskFlow Service Worker — v3 */
 const CACHE = 'taskflow-v3';
 const PRECACHE = [
-  '/index.html',
-  '/board.html',
-  '/automation.html',
-  '/calendar.html',
-  '/reports.html',
-  '/css/style.css',
-  '/js/firebase-config.js',
-  '/js/board.js',
-  '/js/automation-engine.js',
-  '/js/memberships.js',
-  '/js/notifications.js',
-  '/js/auth.js',
-  '/js/boards.js',
-  '/logo.svg',
-  '/manifest.json',
+  './css/style.css',
+  './js/firebase-config.js',
+  './js/board.js',
+  './js/automation-engine.js',
+  './js/memberships.js',
+  './js/notifications.js',
+  './js/auth.js',
+  './js/boards.js',
+  './logo.svg',
+  './manifest.json',
 ];
 
 self.addEventListener('install', e => {

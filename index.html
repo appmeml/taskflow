@@ -652,7 +652,7 @@ const auth=firebase.auth(), db=firebase.firestore();
 
 /* ── PWA ──────────────────────────────────── */
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
 }
 let deferredPrompt=null;
 window.addEventListener('beforeinstallprompt', e=>{
